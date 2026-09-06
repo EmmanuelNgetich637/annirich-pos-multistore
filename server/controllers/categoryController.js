@@ -5,23 +5,21 @@ const getCategories = async (req, res) => {
     try {
 
         const categories =
-            await categoryService.getCategories();
+            await categoryService.getCategories(
+                req.storeId
+            );
 
         res.json({
-
             success: true,
             count: categories.length,
             data: categories
-
         });
 
     } catch (error) {
 
         res.status(500).json({
-
             success: false,
             message: error.message
-
         });
 
     }
@@ -32,9 +30,11 @@ const getCategory = async (req, res) => {
 
     try {
 
-        const category = await categoryService.getCategory(
-            req.params.id
-        );
+        const category =
+            await categoryService.getCategory(
+                req.params.id,
+                req.storeId
+            );
 
         res.json({
             success: true,
@@ -57,7 +57,10 @@ const createCategory = async (req, res) => {
     try {
 
         const category =
-            await categoryService.createCategory(req.body);
+            await categoryService.createCategory(
+                req.body,
+                req.storeId
+            );
 
         res.status(201).json({
             success: true,
@@ -83,15 +86,14 @@ const updateCategory = async (req, res) => {
         const category =
             await categoryService.updateCategory(
                 req.params.id,
-                req.body
+                req.body,
+                req.storeId
             );
 
         res.json({
-
             success: true,
             message: "Category updated successfully.",
             data: category
-
         });
 
     } catch (error) {
@@ -102,10 +104,8 @@ const updateCategory = async (req, res) => {
                 : 400;
 
         res.status(status).json({
-
             success: false,
             message: error.message
-
         });
 
     }
@@ -116,7 +116,10 @@ const deleteCategory = async (req, res) => {
 
     try {
 
-        await categoryService.deleteCategory(req.params.id);
+        await categoryService.deleteCategory(
+            req.params.id,
+            req.storeId
+        );
 
         res.json({
             success: true,
@@ -146,23 +149,22 @@ const searchCategories = async (req, res) => {
         const q = req.query.q || "";
 
         const categories =
-            await categoryService.searchCategories(q);
+            await categoryService.searchCategories(
+                q,
+                req.storeId
+            );
 
         res.json({
-
             success: true,
             count: categories.length,
             data: categories
-
         });
 
     } catch (error) {
 
         res.status(500).json({
-
             success: false,
             message: error.message
-
         });
 
     }
@@ -174,39 +176,44 @@ const getCategoriesPaginated = async (req, res) => {
     try {
 
         const page =
-            Math.max(parseInt(req.query.page) || 1, 1);
+            Math.max(
+                parseInt(req.query.page) || 1,
+                1
+            );
 
         const limit =
             Math.min(
-                Math.max(parseInt(req.query.limit) || 10, 1),
+                Math.max(
+                    parseInt(req.query.limit) || 10,
+                    1
+                ),
                 100
             );
 
         const result =
             await categoryService.getCategoriesPaginated(
                 page,
-                limit
+                limit,
+                req.storeId
             );
 
         res.json({
-
             success: true,
             page,
             limit,
             total: result.total,
-            totalPages: Math.ceil(result.total / limit),
+            totalPages: Math.ceil(
+                result.total / limit
+            ),
             count: result.categories.length,
             data: result.categories
-
         });
 
     } catch (error) {
 
         res.status(500).json({
-
             success: false,
             message: error.message
-
         });
 
     }
@@ -218,22 +225,20 @@ const getCategoryStatistics = async (req, res) => {
     try {
 
         const stats =
-            await categoryService.getCategoryStatistics();
+            await categoryService.getCategoryStatistics(
+                req.storeId
+            );
 
         res.json({
-
             success: true,
             data: stats
-
         });
 
     } catch (error) {
 
         res.status(500).json({
-
             success: false,
             message: error.message
-
         });
 
     }

@@ -296,16 +296,17 @@ const getProductStatistics = async () => {
 
 };
 
-const countProductsByCategory = async (categoryId) => {
+const countProductsByCategory = async (categoryId, storeId) => {
 
     const [[result]] = await db.query(
         `
         SELECT COUNT(*) AS total
         FROM products
         WHERE category_id = ?
+        AND store_id = ?
         AND status = 'active'
         `,
-        [categoryId]
+        [categoryId, storeId]
     );
 
     return result.total;

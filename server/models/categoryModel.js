@@ -1,46 +1,50 @@
 const db = require("../config/db");
 
-const getAllCategories = async () => {
+const getAllCategories = async (storeId) => {
 
     const [rows] = await db.query(
         `
         SELECT *
         FROM categories
-        WHERE status='active'
+        WHERE store_id = ?
+        AND status = 'active'
         ORDER BY name ASC
-        `
+        `,
+        [storeId]
     );
 
     return rows;
 
 };
 
-const getCategoryById = async (id) => {
+const getCategoryById = async (id, storeId) => {
 
     const [rows] = await db.query(
         `
         SELECT *
         FROM categories
         WHERE id = ?
+        AND store_id = ?
         AND status = 'active'
         `,
-        [id]
+        [id, storeId]
     );
 
     return rows[0];
 
 };
 
-const getCategoryByName = async (name) => {
+const getCategoryByName = async (name, storeId) => {
 
     const [rows] = await db.query(
         `
         SELECT *
         FROM categories
-        WHERE LOWER(name)=LOWER(?)
+        WHERE LOWER(name) = LOWER(?)
+        AND store_id = ?
         LIMIT 1
         `,
-        [name]
+        [name, storeId]
     );
 
     return rows[0];
@@ -49,17 +53,22 @@ const getCategoryByName = async (name) => {
 
 const createCategory = async (category) => {
 
-    const { name, description } = category;
+    const {
+        name,
+        description,
+        store_id
+    } = category;
 
     const [result] = await db.query(
         `
         INSERT INTO categories
-        (name, description)
-        VALUES (?, ?)
+        (name, description, store_id)
+        VALUES (?, ?, ?)
         `,
         [
             name,
-            description || null
+            description || null,
+            store_id
         ]
     );
 
@@ -67,7 +76,11 @@ const createCategory = async (category) => {
 
 };
 
-const getCategoryByNameExcludingId = async (name, id) => {
+const getCategoryByNameExcludingId = async (
+    name,
+    id,
+    storeId
+) => {
 
     const [rows] = await db.query(
         `
@@ -75,18 +88,26 @@ const getCategoryByNameExcludingId = async (name, id) => {
         FROM categories
         WHERE LOWER(name) = LOWER(?)
         AND id != ?
+        AND store_id = ?
         LIMIT 1
         `,
-        [name, id]
+        [name, id, storeId]
     );
 
     return rows[0];
 
 };
 
-const updateCategory = async (id, category) => {
+const updateCategory = async (
+    id,
+    category,
+    storeId
+) => {
 
-    const { name, description } = category;
+    const {
+        name,
+        description
+    } = category;
 
     const [result] = await db.query(
         `
@@ -95,11 +116,13 @@ const updateCategory = async (id, category) => {
             name = ?,
             description = ?
         WHERE id = ?
+        AND store_id = ?
         `,
         [
             name,
             description || null,
-            id
+            id,
+            storeId
         ]
     );
 
@@ -107,37 +130,44 @@ const updateCategory = async (id, category) => {
 
 };
 
-const deleteCategory = async (id) => {
+const deleteCategory = async (
+    id,
+    storeId
+) => {
 
     const [result] = await db.query(
         `
         UPDATE categories
-        SET status='inactive'
-        WHERE id=?
+        SET status = 'inactive'
+        WHERE id = ?
+        AND store_id = ?
         `,
-        [id]
+        [id, storeId]
     );
 
     return result;
 
 };
 
-const searchCategories = async (searchTerm) => {
+const searchCategories = async (
+    searchTerm,
+    storeId
+) => {
 
     const [rows] = await db.query(
         `
         SELECT *
         FROM categories
-        WHERE
-            status='active'
-        AND
-        (
+        WHERE store_id = ?
+        AND status = 'active'
+        AND (
             name LIKE ?
             OR description LIKE ?
         )
         ORDER BY name ASC
         `,
         [
+            storeId,
             `%${searchTerm}%`,
             `%${searchTerm}%`
         ]
@@ -147,7 +177,11 @@ const searchCategories = async (searchTerm) => {
 
 };
 
-const getCategoriesPaginated = async (page = 1, limit = 10) => {
+const getCategoriesPaginated = async (
+    page = 1,
+    limit = 10,
+    storeId
+) => {
 
     const offset = (page - 1) * limit;
 
@@ -155,12 +189,14 @@ const getCategoriesPaginated = async (page = 1, limit = 10) => {
         `
         SELECT *
         FROM categories
-        WHERE status='active'
+        WHERE store_id = ?
+        AND status = 'active'
         ORDER BY name ASC
         LIMIT ?
         OFFSET ?
         `,
         [
+            storeId,
             Number(limit),
             Number(offset)
         ]
@@ -170,8 +206,10 @@ const getCategoriesPaginated = async (page = 1, limit = 10) => {
         `
         SELECT COUNT(*) AS total
         FROM categories
-        WHERE status='active'
-        `
+        WHERE store_id = ?
+        AND status = 'active'
+        `,
+        [storeId]
     );
 
     return {
@@ -181,30 +219,46 @@ const getCategoriesPaginated = async (page = 1, limit = 10) => {
 
 };
 
-const getCategoryStatistics = async () => {
+const getCategoryStatistics = async (storeId) => {
 
-    const [[total]] = await db.query(`
+    const [[total]] = await db.query(
+        `
         SELECT COUNT(*) AS totalCategories
         FROM categories
-    `);
+        WHERE store_id = ?
+        `,
+        [storeId]
+    );
 
-    const [[active]] = await db.query(`
+    const [[active]] = await db.query(
+        `
         SELECT COUNT(*) AS activeCategories
         FROM categories
-        WHERE status='active'
-    `);
+        WHERE store_id = ?
+        AND status = 'active'
+        `,
+        [storeId]
+    );
 
-    const [[inactive]] = await db.query(`
+    const [[inactive]] = await db.query(
+        `
         SELECT COUNT(*) AS inactiveCategories
         FROM categories
-        WHERE status='inactive'
-    `);
+        WHERE store_id = ?
+        AND status = 'inactive'
+        `,
+        [storeId]
+    );
 
-    const [[withProducts]] = await db.query(`
+    const [[withProducts]] = await db.query(
+        `
         SELECT COUNT(DISTINCT category_id) AS categoriesWithProducts
         FROM products
-        WHERE status='active'
-    `);
+        WHERE store_id = ?
+        AND status = 'active'
+        `,
+        [storeId]
+    );
 
     const emptyCategories =
         active.activeCategories -
@@ -219,8 +273,6 @@ const getCategoryStatistics = async () => {
     };
 
 };
-
-
 
 module.exports = {
     getAllCategories,
