@@ -4,6 +4,11 @@ const { body, validationResult } = require("express-validator");
 // Register Validation
 // ==========================
 const registerValidation = [
+  body("storeCode")
+    .trim()
+    .notEmpty()
+    .withMessage("Store code is required"),
+
   body("full_name")
     .trim()
     .notEmpty()
@@ -32,6 +37,11 @@ const registerValidation = [
 // Login Validation
 // ==========================
 const loginValidation = [
+  body("storeCode")
+    .trim()
+    .notEmpty()
+    .withMessage("Store code is required"),
+
   body("username")
     .trim()
     .notEmpty()

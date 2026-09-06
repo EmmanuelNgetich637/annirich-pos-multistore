@@ -21,9 +21,17 @@ const register = async (req, res) => {
 // Login User
 const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const {
+      storeCode,
+      username,
+      password
+    } = req.body;
 
-    const result = await authService.login(username, password);
+    const result = await authService.login(
+      storeCode,
+      username,
+      password
+    );
 
     res.status(200).json({
       success: true,

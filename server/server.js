@@ -1,8 +1,14 @@
+const path = require("path");
+const dotenv = require("dotenv");
+
+// Load environment variables FIRST
+dotenv.config({
+    path: path.join(__dirname, ".env")
+});
+
 const express = require("express");
 const cors = require("cors");
-const dotenv = require("dotenv");
 const morgan = require("morgan");
-const path = require("path");
 
 const testRoutes = require("./routes/testRoutes");
 const authRoutes = require("./routes/authRoutes");
