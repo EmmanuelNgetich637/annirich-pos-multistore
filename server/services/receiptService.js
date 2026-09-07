@@ -1,4 +1,5 @@
-const Receipt = require("../models/receiptModel");
+const Receipt =
+    require("../models/receiptModel");
 
 /*
 |--------------------------------------------------------------------------
@@ -6,15 +7,19 @@ const Receipt = require("../models/receiptModel");
 |--------------------------------------------------------------------------
 */
 
-const getReceiptBySaleId = async (saleId) => {
+const getReceiptBySaleId = async (
+    saleId,
+    storeId
+) => {
 
     const receipt =
-        await Receipt.getReceiptBySaleId(saleId);
+        await Receipt.getReceiptBySaleId(
+            saleId,
+            storeId
+        );
 
     if (!receipt) {
-
         throw new Error("Receipt not found.");
-
     }
 
     return {
@@ -70,7 +75,6 @@ const getReceiptBySaleId = async (saleId) => {
         },
 
         items:
-
             receipt.items.map(item => ({
 
                 product_name:
@@ -91,8 +95,7 @@ const getReceiptBySaleId = async (saleId) => {
 
 };
 
+
 module.exports = {
-
     getReceiptBySaleId
-
 };

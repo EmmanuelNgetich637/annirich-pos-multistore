@@ -6,11 +6,12 @@ const Settings = require("../models/settingsModel");
 |--------------------------------------------------------------------------
 */
 
-const getSettings = async () => {
+const getSettings = async (storeId) => {
 
-    return await Settings.getSettings();
+    return await Settings.getSettings(storeId);
 
 };
+
 
 /*
 |--------------------------------------------------------------------------
@@ -18,29 +19,32 @@ const getSettings = async () => {
 |--------------------------------------------------------------------------
 */
 
-const saveSettings = async (data) => {
+const saveSettings = async (data, storeId) => {
 
     const existingSettings =
-        await Settings.getSettings();
+        await Settings.getSettings(storeId);
 
     if (!existingSettings) {
 
-        await Settings.createSettings(data);
+        await Settings.createSettings(
+            data,
+            storeId
+        );
 
     } else {
 
-        await Settings.updateSettings(data);
+        await Settings.updateSettings(
+            data,
+            storeId
+        );
 
     }
 
-    return await Settings.getSettings();
-
+    return await Settings.getSettings(storeId);
 };
 
+
 module.exports = {
-
     getSettings,
-
     saveSettings
-
 };

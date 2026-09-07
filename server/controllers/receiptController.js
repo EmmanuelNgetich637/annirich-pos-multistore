@@ -1,5 +1,6 @@
 const receiptService =
-require("../services/receiptService");
+    require("../services/receiptService");
+
 
 /*
 |--------------------------------------------------------------------------
@@ -17,15 +18,13 @@ const getReceiptBySaleId = async (
 
         const receipt =
             await receiptService.getReceiptBySaleId(
-                req.params.saleId
+                req.params.saleId,
+                req.storeId
             );
 
         res.status(200).json({
-
             success: true,
-
             data: receipt
-
         });
 
     } catch (error) {
@@ -36,8 +35,7 @@ const getReceiptBySaleId = async (
 
 };
 
+
 module.exports = {
-
     getReceiptBySaleId
-
 };

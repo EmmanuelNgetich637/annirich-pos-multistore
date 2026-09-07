@@ -6,19 +6,21 @@ const db = require("../config/db");
 |--------------------------------------------------------------------------
 */
 
-const getSettings = async () => {
+const getSettings = async (storeId) => {
 
     const [rows] = await db.query(
         `
         SELECT *
         FROM settings
+        WHERE store_id = ?
         LIMIT 1
-        `
+        `,
+        [storeId]
     );
 
     return rows[0] || null;
-
 };
+
 
 /*
 |--------------------------------------------------------------------------
@@ -26,7 +28,7 @@ const getSettings = async () => {
 |--------------------------------------------------------------------------
 */
 
-const createSettings = async (data) => {
+const createSettings = async (data, storeId) => {
 
     const {
         business_name,
@@ -40,6 +42,7 @@ const createSettings = async (data) => {
         `
         INSERT INTO settings
         (
+            store_id,
             business_name,
             phone,
             email,
@@ -47,9 +50,10 @@ const createSettings = async (data) => {
             receipt_footer
         )
         VALUES
-        (?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, ?)
         `,
         [
+            storeId,
             business_name,
             phone,
             email,
@@ -59,8 +63,8 @@ const createSettings = async (data) => {
     );
 
     return result.insertId;
-
 };
+
 
 /*
 |--------------------------------------------------------------------------
@@ -68,7 +72,7 @@ const createSettings = async (data) => {
 |--------------------------------------------------------------------------
 */
 
-const updateSettings = async (data) => {
+const updateSettings = async (data, storeId) => {
 
     const {
         business_name,
@@ -87,27 +91,24 @@ const updateSettings = async (data) => {
             email = ?,
             address = ?,
             receipt_footer = ?
-        WHERE id = 1
+        WHERE store_id = ?
         `,
         [
             business_name,
             phone,
             email,
             address,
-            receipt_footer
+            receipt_footer,
+            storeId
         ]
     );
 
-    return getSettings();
-
+    return getSettings(storeId);
 };
 
+
 module.exports = {
-
     getSettings,
-
     createSettings,
-
     updateSettings
-
 };
