@@ -1,55 +1,52 @@
 const db = require("../config/db");
 
-const getAllCustomers = async () => {
-
+const getAllCustomers = async (storeId) => {
     const [rows] = await db.query(
         `
         SELECT *
         FROM customers
-        WHERE status = 'active'
+        WHERE store_id = ?
+        AND status = 'active'
         ORDER BY name ASC
-        `
+        `,
+        [storeId]
     );
 
     return rows;
-
 };
 
-const getCustomerById = async (id) => {
-
+const getCustomerById = async (id, storeId) => {
     const [rows] = await db.query(
         `
         SELECT *
         FROM customers
         WHERE id = ?
+        AND store_id = ?
         AND status = 'active'
         LIMIT 1
         `,
-        [id]
+        [id, storeId]
     );
 
     return rows[0];
-
 };
 
-const getCustomerByPhone = async (phone) => {
-
+const getCustomerByPhone = async (phone, storeId) => {
     const [rows] = await db.query(
         `
         SELECT *
         FROM customers
         WHERE phone = ?
+        AND store_id = ?
         LIMIT 1
         `,
-        [phone]
+        [phone, storeId]
     );
 
     return rows[0];
-
 };
 
-const getCustomerByEmail = async (email) => {
-
+const getCustomerByEmail = async (email, storeId) => {
     if (!email) return null;
 
     const [rows] = await db.query(
@@ -57,36 +54,38 @@ const getCustomerByEmail = async (email) => {
         SELECT *
         FROM customers
         WHERE email = ?
+        AND store_id = ?
         LIMIT 1
         `,
-        [email]
+        [email, storeId]
     );
 
     return rows[0];
-
 };
 
 const createCustomer = async (customer) => {
-
     const {
         name,
         phone,
         email,
-        address
+        address,
+        store_id
     } = customer;
 
     const [result] = await db.query(
         `
         INSERT INTO customers
         (
+            store_id,
             name,
             phone,
             email,
             address
         )
-        VALUES (?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?)
         `,
         [
+            store_id,
             name,
             phone,
             email || null,
@@ -95,28 +94,33 @@ const createCustomer = async (customer) => {
     );
 
     return result.insertId;
-
 };
 
-const getCustomerByPhoneExcludingId = async (phone, id) => {
-
+const getCustomerByPhoneExcludingId = async (
+    phone,
+    id,
+    storeId
+) => {
     const [rows] = await db.query(
         `
         SELECT *
         FROM customers
         WHERE phone = ?
         AND id != ?
+        AND store_id = ?
         LIMIT 1
         `,
-        [phone, id]
+        [phone, id, storeId]
     );
 
     return rows[0];
-
 };
 
-const getCustomerByEmailExcludingId = async (email, id) => {
-
+const getCustomerByEmailExcludingId = async (
+    email,
+    id,
+    storeId
+) => {
     if (!email) return null;
 
     const [rows] = await db.query(
@@ -125,17 +129,20 @@ const getCustomerByEmailExcludingId = async (email, id) => {
         FROM customers
         WHERE email = ?
         AND id != ?
+        AND store_id = ?
         LIMIT 1
         `,
-        [email, id]
+        [email, id, storeId]
     );
 
     return rows[0];
-
 };
 
-const updateCustomer = async (id, customer) => {
-
+const updateCustomer = async (
+    id,
+    customer,
+    storeId
+) => {
     const {
         name,
         phone,
@@ -152,45 +159,48 @@ const updateCustomer = async (id, customer) => {
             email = ?,
             address = ?
         WHERE id = ?
+        AND store_id = ?
         `,
         [
             name,
             phone,
             email || null,
             address || null,
-            id
+            id,
+            storeId
         ]
     );
 
-    return await getCustomerById(id);
-
+    return await getCustomerById(id, storeId);
 };
 
-const deleteCustomer = async (id) => {
-
+const deleteCustomer = async (id, storeId) => {
     const [result] = await db.query(
         `
         UPDATE customers
         SET status = 'inactive'
         WHERE id = ?
+        AND store_id = ?
         AND status = 'active'
         `,
-        [id]
+        [id, storeId]
     );
 
     return result.affectedRows;
-
 };
 
-const searchCustomers = async (keyword) => {
-
+const searchCustomers = async (
+    keyword,
+    storeId
+) => {
     const search = `%${keyword}%`;
 
     const [rows] = await db.query(
         `
         SELECT *
         FROM customers
-        WHERE status = 'active'
+        WHERE store_id = ?
+        AND status = 'active'
         AND (
             name LIKE ?
             OR phone LIKE ?
@@ -199,6 +209,7 @@ const searchCustomers = async (keyword) => {
         ORDER BY name ASC
         `,
         [
+            storeId,
             search,
             search,
             search
@@ -206,23 +217,27 @@ const searchCustomers = async (keyword) => {
     );
 
     return rows;
-
 };
 
-const getCustomersPaginated = async (page, limit) => {
-
+const getCustomersPaginated = async (
+    page,
+    limit,
+    storeId
+) => {
     const offset = (page - 1) * limit;
 
     const [rows] = await db.query(
         `
         SELECT *
         FROM customers
-        WHERE status = 'active'
+        WHERE store_id = ?
+        AND status = 'active'
         ORDER BY name ASC
         LIMIT ?
         OFFSET ?
         `,
         [
+            storeId,
             Number(limit),
             Number(offset)
         ]
@@ -232,37 +247,38 @@ const getCustomersPaginated = async (page, limit) => {
         `
         SELECT COUNT(*) AS total
         FROM customers
-        WHERE status = 'active'
-        `
+        WHERE store_id = ?
+        AND status = 'active'
+        `,
+        [storeId]
     );
 
     return {
-
         customers: rows,
         total: count.total
-
     };
-
 };
 
-const getCustomerStatistics = async () => {
-
+const getCustomerStatistics = async (storeId) => {
     const [[stats]] = await db.query(
         `
         SELECT
             COUNT(*) AS totalCustomers,
-            SUM(status = 'active') AS activeCustomers,
-            SUM(status = 'inactive') AS inactiveCustomers
+            COALESCE(SUM(status = 'active'), 0)
+                AS activeCustomers,
+            COALESCE(SUM(status = 'inactive'), 0)
+                AS inactiveCustomers
         FROM customers
-        `
+        WHERE store_id = ?
+        `,
+        [storeId]
     );
 
     return {
-        totalCustomers: Number(stats.totalCustomers),
-        activeCustomers: Number(stats.activeCustomers || 0),
-        inactiveCustomers: Number(stats.inactiveCustomers || 0)
+        totalCustomers: stats.totalCustomers,
+        activeCustomers: stats.activeCustomers,
+        inactiveCustomers: stats.inactiveCustomers
     };
-
 };
 
 module.exports = {
@@ -270,9 +286,9 @@ module.exports = {
     getCustomerById,
     getCustomerByPhone,
     getCustomerByEmail,
+    createCustomer,
     getCustomerByPhoneExcludingId,
     getCustomerByEmailExcludingId,
-    createCustomer,
     updateCustomer,
     deleteCustomer,
     searchCustomers,
