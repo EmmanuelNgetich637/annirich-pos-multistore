@@ -1,20 +1,52 @@
 const Product = require("../models/productModel");
+const db = require("../config/db");
 
-const createProduct = async (data) => {
+// ==========================
+// Create Product
+// ==========================
+const createProduct = async (data, storeId) => {
 
-    return await Product.createProduct(data);
+    // Verify that the selected category belongs to this store
+    const [categories] = await db.query(
+        `
+        SELECT id
+        FROM categories
+        WHERE id = ?
+        AND store_id = ?
+        AND status = 'active'
+        `,
+        [data.category_id, storeId]
+    );
+
+    if (categories.length === 0) {
+        throw new Error("Category not found in this store.");
+    }
+
+    return await Product.createProduct({
+        ...data,
+        store_id: storeId
+    });
 
 };
 
-const getProducts = async () => {
+// ==========================
+// Get All Products
+// ==========================
+const getProducts = async (storeId) => {
 
-    return await Product.getAllProducts();
+    return await Product.getAllProducts(storeId);
 
 };
 
-const getProduct = async (id) => {
+// ==========================
+// Get Product
+// ==========================
+const getProduct = async (id, storeId) => {
 
-    const product = await Product.getProductById(id);
+    const product = await Product.getProductById(
+        id,
+        storeId
+    );
 
     if (!product) {
         throw new Error("Product not found");
@@ -24,73 +56,158 @@ const getProduct = async (id) => {
 
 };
 
-const updateProduct = async (id, data) => {
+// ==========================
+// Update Product
+// ==========================
+const updateProduct = async (id, data, storeId) => {
 
-    const existing = await Product.getProductById(id);
+    const existing = await Product.getProductById(
+        id,
+        storeId
+    );
 
     if (!existing) {
         throw new Error("Product not found");
     }
 
-    await Product.updateProduct(id, data);
+    // If category is being changed, verify it belongs
+    // to the authenticated store.
+    if (data.category_id !== undefined) {
 
-    return await Product.getProductById(id);
+        const [categories] = await db.query(
+            `
+            SELECT id
+            FROM categories
+            WHERE id = ?
+            AND store_id = ?
+            AND status = 'active'
+            `,
+            [data.category_id, storeId]
+        );
+
+        if (categories.length === 0) {
+            throw new Error("Category not found in this store.");
+        }
+
+    }
+
+    // Never allow the client to change store ownership
+    const safeData = { ...data };
+    delete safeData.store_id;
+
+    await Product.updateProduct(
+        id,
+        safeData,
+        storeId
+    );
+
+    return await Product.getProductById(
+        id,
+        storeId
+    );
+
 };
 
-const deleteProduct = async (id) => {
+// ==========================
+// Delete Product
+// ==========================
+const deleteProduct = async (id, storeId) => {
 
-    const product = await Product.getProductById(id);
+    const product = await Product.getProductById(
+        id,
+        storeId
+    );
 
     if (!product) {
         throw new Error("Product not found");
     }
 
-    await Product.deleteProduct(id);
-
-    return;
-
-};
-
-const searchProducts = async (query) => {
-
-    return await Product.searchProducts(query);
+    await Product.deleteProduct(
+        id,
+        storeId
+    );
 
 };
 
-const getProductsPaginated = async (page, limit) => {
+// ==========================
+// Search Products
+// ==========================
+const searchProducts = async (query, storeId) => {
 
-    return await Product.getProductsPaginated(page, limit);
+    return await Product.searchProducts(
+        query,
+        storeId
+    );
 
 };
 
-const updateProductImage = async (id, file) => {
+// ==========================
+// Pagination
+// ==========================
+const getProductsPaginated = async (
+    page,
+    limit,
+    storeId
+) => {
 
-    const product = await Product.getProductById(id);
+    return await Product.getProductsPaginated(
+        page,
+        limit,
+        storeId
+    );
+
+};
+
+// ==========================
+// Update Product Image
+// ==========================
+const updateProductImage = async (
+    id,
+    file,
+    storeId
+) => {
+
+    const product = await Product.getProductById(
+        id,
+        storeId
+    );
 
     if (!product) {
-
         throw new Error("Product not found");
-
     }
 
     await Product.updateProductImage(
         id,
-        file.filename
+        file.filename,
+        storeId
     );
 
-    return await Product.getProductById(id);
+    return await Product.getProductById(
+        id,
+        storeId
+    );
 
 };
 
-const getLowStockProducts = async () => {
+// ==========================
+// Low Stock Products
+// ==========================
+const getLowStockProducts = async (storeId) => {
 
-    return await Product.getLowStockProducts();
+    return await Product.getLowStockProducts(
+        storeId
+    );
 
 };
 
-const getProductStatistics = async () => {
+// ==========================
+// Product Statistics
+// ==========================
+const getProductStatistics = async (storeId) => {
 
-    return await Product.getProductStatistics();
+    return await Product.getProductStatistics(
+        storeId
+    );
 
 };
 

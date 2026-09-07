@@ -1,5 +1,8 @@
 const db = require("../config/db");
 
+// ==========================
+// Create Product
+// ==========================
 const createProduct = async (product) => {
 
     const {
@@ -12,7 +15,8 @@ const createProduct = async (product) => {
         minimum_stock,
         unit,
         image,
-        description
+        description,
+        store_id
     } = product;
 
     const [result] = await db.query(
@@ -28,9 +32,10 @@ const createProduct = async (product) => {
             minimum_stock,
             unit,
             image,
-            description
+            description,
+            store_id
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         [
             barcode,
@@ -42,7 +47,8 @@ const createProduct = async (product) => {
             minimum_stock,
             unit,
             image,
-            description
+            description,
+            store_id
         ]
     );
 
@@ -50,93 +56,142 @@ const createProduct = async (product) => {
 
 };
 
-const getAllProducts = async () => {
-    const [rows] = await db.query(`
+// ==========================
+// Get All Products
+// ==========================
+const getAllProducts = async (storeId) => {
+
+    const [rows] = await db.query(
+        `
         SELECT
             products.*,
             categories.name AS category_name
         FROM products
         JOIN categories
             ON products.category_id = categories.id
+            AND categories.store_id = products.store_id
+        WHERE products.store_id = ?
         ORDER BY products.id DESC
-    `);
+        `,
+        [storeId]
+    );
 
     return rows;
+
 };
 
-const getProductById = async (id) => {
+// ==========================
+// Get Product By ID
+// ==========================
+const getProductById = async (id, storeId) => {
 
     const [rows] = await db.query(
-        `SELECT * FROM products WHERE id = ?`,
-        [id]
+        `
+        SELECT
+            products.*,
+            categories.name AS category_name
+        FROM products
+        JOIN categories
+            ON products.category_id = categories.id
+            AND categories.store_id = products.store_id
+        WHERE products.id = ?
+        AND products.store_id = ?
+        `,
+        [id, storeId]
     );
 
     return rows[0];
 
 };
 
-const updateProduct = async (id, product) => {
+// ==========================
+// Update Product
+// ==========================
+const updateProduct = async (
+    id,
+    product,
+    storeId
+) => {
 
     const fields = [];
     const values = [];
 
+    // Fields that are allowed to be updated
+    const allowedFields = [
+        "barcode",
+        "name",
+        "category_id",
+        "buying_price",
+        "selling_price",
+        "quantity",
+        "minimum_stock",
+        "unit",
+        "image",
+        "description",
+        "status"
+    ];
 
-    Object.keys(product).forEach((key) => {
+    allowedFields.forEach((key) => {
 
         if (product[key] !== undefined) {
 
-            fields.push(`${key}=?`);
-
+            fields.push(`${key} = ?`);
             values.push(product[key]);
 
         }
 
     });
 
-
     if (fields.length === 0) {
-
         return null;
-
     }
 
-
     values.push(id);
-
+    values.push(storeId);
 
     const [result] = await db.query(
-
         `
         UPDATE products
         SET ${fields.join(", ")}
-        WHERE id=?
+        WHERE id = ?
+        AND store_id = ?
         `,
-
         values
-
     );
-
 
     return result;
 
 };
 
-const deleteProduct = async (id) => {
+// ==========================
+// Delete Product
+// ==========================
+const deleteProduct = async (
+    id,
+    storeId
+) => {
 
     const [result] = await db.query(
         `
         UPDATE products
-        SET status='inactive'
-        WHERE id=?
+        SET status = 'inactive'
+        WHERE id = ?
+        AND store_id = ?
         `,
-        [id]
+        [id, storeId]
     );
 
     return result;
 
 };
 
-const searchProducts = async (searchTerm) => {
+// ==========================
+// Search Products
+// ==========================
+const searchProducts = async (
+    searchTerm,
+    storeId
+) => {
 
     const [rows] = await db.query(
         `
@@ -146,10 +201,10 @@ const searchProducts = async (searchTerm) => {
         FROM products
         JOIN categories
             ON products.category_id = categories.id
-        WHERE
-            products.status='active'
-        AND
-        (
+            AND categories.store_id = products.store_id
+        WHERE products.store_id = ?
+        AND products.status = 'active'
+        AND (
             products.name LIKE ?
             OR products.barcode LIKE ?
             OR categories.name LIKE ?
@@ -157,6 +212,7 @@ const searchProducts = async (searchTerm) => {
         ORDER BY products.name ASC
         `,
         [
+            storeId,
             `%${searchTerm}%`,
             `%${searchTerm}%`,
             `%${searchTerm}%`
@@ -167,7 +223,14 @@ const searchProducts = async (searchTerm) => {
 
 };
 
-const getProductsPaginated = async (page = 1, limit = 10) => {
+// ==========================
+// Paginated Products
+// ==========================
+const getProductsPaginated = async (
+    page = 1,
+    limit = 10,
+    storeId
+) => {
 
     const offset = (page - 1) * limit;
 
@@ -179,20 +242,28 @@ const getProductsPaginated = async (page = 1, limit = 10) => {
         FROM products
         JOIN categories
             ON products.category_id = categories.id
-        WHERE products.status='active'
+            AND categories.store_id = products.store_id
+        WHERE products.store_id = ?
+        AND products.status = 'active'
         ORDER BY products.id DESC
         LIMIT ?
         OFFSET ?
         `,
-        [Number(limit), Number(offset)]
+        [
+            storeId,
+            Number(limit),
+            Number(offset)
+        ]
     );
 
     const [count] = await db.query(
         `
         SELECT COUNT(*) AS total
         FROM products
-        WHERE status='active'
-        `
+        WHERE store_id = ?
+        AND status = 'active'
+        `,
+        [storeId]
     );
 
     return {
@@ -202,25 +273,39 @@ const getProductsPaginated = async (page = 1, limit = 10) => {
 
 };
 
-const updateProductImage = async (id, image) => {
+// ==========================
+// Update Product Image
+// ==========================
+const updateProductImage = async (
+    id,
+    image,
+    storeId
+) => {
 
     const [result] = await db.query(
-
         `
         UPDATE products
-        SET image=?
-        WHERE id=?
+        SET image = ?
+        WHERE id = ?
+        AND store_id = ?
         `,
-
-        [image, id]
-
+        [
+            image,
+            id,
+            storeId
+        ]
     );
 
     return result;
 
 };
 
-const getLowStockProducts = async () => {
+// ==========================
+// Low Stock Products
+// ==========================
+const getLowStockProducts = async (
+    storeId
+) => {
 
     const [rows] = await db.query(
         `
@@ -230,60 +315,90 @@ const getLowStockProducts = async () => {
         FROM products
         JOIN categories
             ON products.category_id = categories.id
-        WHERE
-            products.status='active'
-        AND
-            products.quantity <= products.minimum_stock
-        ORDER BY quantity ASC
-        `
+            AND categories.store_id = products.store_id
+        WHERE products.store_id = ?
+        AND products.status = 'active'
+        AND products.quantity <= products.minimum_stock
+        ORDER BY products.quantity ASC
+        `,
+        [storeId]
     );
 
     return rows;
 
 };
 
-const getProductStatistics = async () => {
+// ==========================
+// Product Statistics
+// ==========================
+const getProductStatistics = async (
+    storeId
+) => {
 
-    const [[total]] = await db.query(`
+    const [[total]] = await db.query(
+        `
         SELECT COUNT(*) AS totalProducts
         FROM products
-    `);
+        WHERE store_id = ?
+        `,
+        [storeId]
+    );
 
-    const [[active]] = await db.query(`
+    const [[active]] = await db.query(
+        `
         SELECT COUNT(*) AS activeProducts
         FROM products
-        WHERE status='active'
-    `);
+        WHERE store_id = ?
+        AND status = 'active'
+        `,
+        [storeId]
+    );
 
-    const [[inactive]] = await db.query(`
+    const [[inactive]] = await db.query(
+        `
         SELECT COUNT(*) AS inactiveProducts
         FROM products
-        WHERE status='inactive'
-    `);
+        WHERE store_id = ?
+        AND status = 'inactive'
+        `,
+        [storeId]
+    );
 
-    const [[lowStock]] = await db.query(`
+    const [[lowStock]] = await db.query(
+        `
         SELECT COUNT(*) AS lowStockProducts
         FROM products
-        WHERE status='active'
+        WHERE store_id = ?
+        AND status = 'active'
         AND quantity <= minimum_stock
-    `);
+        `,
+        [storeId]
+    );
 
-    const [[outOfStock]] = await db.query(`
+    const [[outOfStock]] = await db.query(
+        `
         SELECT COUNT(*) AS outOfStockProducts
         FROM products
-        WHERE status='active'
+        WHERE store_id = ?
+        AND status = 'active'
         AND quantity = 0
-    `);
+        `,
+        [storeId]
+    );
 
-    const [[inventory]] = await db.query(`
+    const [[inventory]] = await db.query(
+        `
         SELECT
             IFNULL(
                 SUM(quantity * buying_price),
                 0
             ) AS inventoryValue
         FROM products
-        WHERE status='active'
-    `);
+        WHERE store_id = ?
+        AND status = 'active'
+        `,
+        [storeId]
+    );
 
     return {
         ...total,
@@ -296,7 +411,13 @@ const getProductStatistics = async () => {
 
 };
 
-const countProductsByCategory = async (categoryId, storeId) => {
+// ==========================
+// Count Products By Category
+// ==========================
+const countProductsByCategory = async (
+    categoryId,
+    storeId
+) => {
 
     const [[result]] = await db.query(
         `
@@ -306,7 +427,10 @@ const countProductsByCategory = async (categoryId, storeId) => {
         AND store_id = ?
         AND status = 'active'
         `,
-        [categoryId, storeId]
+        [
+            categoryId,
+            storeId
+        ]
     );
 
     return result.total;
