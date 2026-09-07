@@ -1,0 +1,242 @@
+.backup-page {
+    width: 100%;
+}
+
+.backup-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.backup-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 19px;
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+}
+
+.backup-stat-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #EFF6FF;
+    color: #2563EB;
+    font-size: 20px;
+}
+
+.backup-stat-card span {
+    display: block;
+    margin-bottom: 5px;
+    color: #64748B;
+    font-size: 12px;
+}
+
+.backup-stat-card strong {
+    font-size: 15px;
+    color: #0F172A;
+}
+
+.backup-actions-card {
+    margin-bottom: 24px;
+    padding: 22px;
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+}
+
+.backup-actions-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.backup-action-icon {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: #EFF6FF;
+    color: #2563EB;
+    font-size: 21px;
+}
+
+.backup-actions-header h3 {
+    margin: 0 0 4px;
+    font-size: 16px;
+}
+
+.backup-actions-header p {
+    margin: 0;
+    color: #64748B;
+    font-size: 12px;
+}
+
+.backup-action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.backup-action-buttons button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.backup-history-card {
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.backup-history-header {
+    padding: 20px 22px;
+    border-bottom: 1px solid #F1F5F9;
+}
+
+.backup-history-header h3 {
+    margin: 0 0 4px;
+    font-size: 16px;
+}
+
+.backup-history-header span {
+    color: #64748B;
+    font-size: 12px;
+}
+
+.backup-table-container {
+    overflow-x: auto;
+}
+
+.backup-table {
+    width: 100%;
+    min-width: 850px;
+    border-collapse: collapse;
+}
+
+.backup-table th {
+    padding: 14px 18px;
+    text-align: left;
+    background: #F8FAFC;
+    color: #64748B;
+    font-size: 11px;
+    text-transform: uppercase;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.backup-table td {
+    padding: 16px 18px;
+    font-size: 13px;
+    border-bottom: 1px solid #F1F5F9;
+}
+
+.backup-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.backup-file-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: #F8FAFC;
+    color: #2563EB;
+}
+
+.backup-name strong {
+    font-size: 12px;
+}
+
+.backup-date strong {
+    display: block;
+    font-size: 12px;
+}
+
+.backup-date span {
+    display: block;
+    margin-top: 3px;
+    color: #94A3B8;
+    font-size: 10px;
+}
+
+.backup-type {
+    padding: 5px 9px;
+    border-radius: 6px;
+    background: #F1F5F9;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.backup-completed {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 6px;
+    background: #ECFDF5;
+    color: #15803D;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.backup-row-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.backup-row-actions button {
+    width: 31px;
+    height: 31px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 7px;
+    background: #F8FAFC;
+    color: #64748B;
+    cursor: pointer;
+}
+
+.backup-row-actions button:hover {
+    color: #2563EB;
+}
+
+@media (max-width: 1000px) {
+    .backup-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 700px) {
+    .backup-action-buttons {
+        flex-direction: column;
+    }
+
+    .backup-action-buttons button {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 600px) {
+    .backup-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .backup-actions-header {
+        align-items: flex-start;
+    }
+}
