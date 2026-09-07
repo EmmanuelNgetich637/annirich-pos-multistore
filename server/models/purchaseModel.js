@@ -261,18 +261,17 @@ const getPurchaseStatistics = async () => {
 
 
 // Count purchases by supplier
-const countPurchasesBySupplier = async (supplier_id) => {
-
+const countPurchasesBySupplier = async (supplier_id, storeId) => {
 
     const [[result]] = await db.query(
         `
         SELECT COUNT(*) AS count
         FROM purchases
         WHERE supplier_id = ?
+        AND store_id = ?
         `,
-        [supplier_id]
+        [supplier_id, storeId]
     );
-
 
     return result.count;
 

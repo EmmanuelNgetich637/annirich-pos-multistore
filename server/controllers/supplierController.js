@@ -2,7 +2,9 @@ const supplierService = require("../services/supplierService");
 
 const getSuppliers = async (req, res) => {
     try {
-        const suppliers = await supplierService.getSuppliers();
+        const suppliers = await supplierService.getSuppliers(
+            req.storeId
+        );
 
         res.json({
             success: true,
@@ -19,7 +21,10 @@ const getSuppliers = async (req, res) => {
 
 const getSupplier = async (req, res) => {
     try {
-        const supplier = await supplierService.getSupplier(req.params.id);
+        const supplier = await supplierService.getSupplier(
+            req.params.id,
+            req.storeId
+        );
 
         res.json({
             success: true,
@@ -35,7 +40,10 @@ const getSupplier = async (req, res) => {
 
 const createSupplier = async (req, res) => {
     try {
-        const supplier = await supplierService.createSupplier(req.body);
+        const supplier = await supplierService.createSupplier(
+            req.body,
+            req.storeId
+        );
 
         res.status(201).json({
             success: true,
@@ -54,7 +62,8 @@ const updateSupplier = async (req, res) => {
     try {
         const supplier = await supplierService.updateSupplier(
             req.params.id,
-            req.body
+            req.body,
+            req.storeId
         );
 
         res.json({
@@ -77,7 +86,10 @@ const updateSupplier = async (req, res) => {
 
 const deleteSupplier = async (req, res) => {
     try {
-        await supplierService.deleteSupplier(req.params.id);
+        await supplierService.deleteSupplier(
+            req.params.id,
+            req.storeId
+        );
 
         res.json({
             success: true,
@@ -100,7 +112,10 @@ const searchSuppliers = async (req, res) => {
     try {
         const q = req.query.q || "";
 
-        const suppliers = await supplierService.searchSuppliers(q);
+        const suppliers = await supplierService.searchSuppliers(
+            q,
+            req.storeId
+        );
 
         res.json({
             success: true,
@@ -117,7 +132,11 @@ const searchSuppliers = async (req, res) => {
 
 const getSuppliersPaginated = async (req, res) => {
     try {
-        const page = Math.max(parseInt(req.query.page) || 1, 1);
+        const page = Math.max(
+            parseInt(req.query.page) || 1,
+            1
+        );
+
         const limit = Math.min(
             Math.max(parseInt(req.query.limit) || 10, 1),
             100
@@ -125,7 +144,8 @@ const getSuppliersPaginated = async (req, res) => {
 
         const result = await supplierService.getSuppliersPaginated(
             page,
-            limit
+            limit,
+            req.storeId
         );
 
         res.json({
@@ -147,7 +167,9 @@ const getSuppliersPaginated = async (req, res) => {
 
 const getSupplierStatistics = async (req, res) => {
     try {
-        const stats = await supplierService.getSupplierStatistics();
+        const stats = await supplierService.getSupplierStatistics(
+            req.storeId
+        );
 
         res.json({
             success: true,

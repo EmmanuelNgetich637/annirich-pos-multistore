@@ -1,12 +1,12 @@
 const Supplier = require("../models/supplierModel");
 const Purchase = require("../models/purchaseModel");
 
-const getSuppliers = async () => {
-    return await Supplier.getAllSuppliers();
+const getSuppliers = async (storeId) => {
+    return await Supplier.getAllSuppliers(storeId);
 };
 
-const getSupplier = async (id) => {
-    const supplier = await Supplier.getSupplierById(id);
+const getSupplier = async (id, storeId) => {
+    const supplier = await Supplier.getSupplierById(id, storeId);
 
     if (!supplier) {
         throw new Error("Supplier not found.");
@@ -15,12 +15,15 @@ const getSupplier = async (id) => {
     return supplier;
 };
 
-const createSupplier = async (data) => {
+const createSupplier = async (data, storeId) => {
     if (!data.name || data.name.trim() === "") {
         throw new Error("Supplier name is required.");
     }
 
-    const exists = await Supplier.getSupplierByName(data.name.trim());
+    const exists = await Supplier.getSupplierByName(
+        data.name.trim(),
+        storeId
+    );
 
     if (exists) {
         throw new Error("Supplier already exists.");
@@ -28,14 +31,15 @@ const createSupplier = async (data) => {
 
     const id = await Supplier.createSupplier({
         ...data,
-        name: data.name.trim()
+        name: data.name.trim(),
+        store_id: storeId
     });
 
-    return await Supplier.getSupplierById(id);
+    return await Supplier.getSupplierById(id, storeId);
 };
 
-const updateSupplier = async (id, data) => {
-    const supplier = await Supplier.getSupplierById(id);
+const updateSupplier = async (id, data, storeId) => {
+    const supplier = await Supplier.getSupplierById(id, storeId);
 
     if (!supplier) {
         throw new Error("Supplier not found.");
@@ -47,29 +51,37 @@ const updateSupplier = async (id, data) => {
 
     const duplicate = await Supplier.getSupplierByNameExcludingId(
         data.name.trim(),
-        id
+        id,
+        storeId
     );
 
     if (duplicate) {
         throw new Error("Supplier name already exists.");
     }
 
-    await Supplier.updateSupplier(id, {
-        ...data,
-        name: data.name.trim()
-    });
+    await Supplier.updateSupplier(
+        id,
+        {
+            ...data,
+            name: data.name.trim()
+        },
+        storeId
+    );
 
-    return await Supplier.getSupplierById(id);
+    return await Supplier.getSupplierById(id, storeId);
 };
 
-const deleteSupplier = async (id) => {
-    const supplier = await Supplier.getSupplierById(id);
+const deleteSupplier = async (id, storeId) => {
+    const supplier = await Supplier.getSupplierById(id, storeId);
 
     if (!supplier) {
         throw new Error("Supplier not found.");
     }
 
-    const purchases = await Purchase.countPurchasesBySupplier(id);
+    const purchases = await Purchase.countPurchasesBySupplier(
+        id,
+        storeId
+    );
 
     if (purchases > 0) {
         throw new Error(
@@ -77,23 +89,27 @@ const deleteSupplier = async (id) => {
         );
     }
 
-    await Supplier.deleteSupplier(id);
+    await Supplier.deleteSupplier(id, storeId);
 
     return {
         message: "Supplier deleted successfully."
     };
 };
 
-const searchSuppliers = async (query) => {
-    return await Supplier.searchSuppliers(query);
+const searchSuppliers = async (query, storeId) => {
+    return await Supplier.searchSuppliers(query, storeId);
 };
 
-const getSuppliersPaginated = async (page, limit) => {
-    return await Supplier.getSuppliersPaginated(page, limit);
+const getSuppliersPaginated = async (page, limit, storeId) => {
+    return await Supplier.getSuppliersPaginated(
+        page,
+        limit,
+        storeId
+    );
 };
 
-const getSupplierStatistics = async () => {
-    return await Supplier.getSupplierStatistics();
+const getSupplierStatistics = async (storeId) => {
+    return await Supplier.getSupplierStatistics(storeId);
 };
 
 module.exports = {
