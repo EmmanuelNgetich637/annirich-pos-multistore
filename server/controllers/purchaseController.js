@@ -10,44 +10,45 @@ const createPurchase = async (req, res) => {
         const purchase =
             await purchaseService.createPurchase(
                 req.body,
-                req.user.id
+                req.user.id,
+                req.storeId
             );
 
 
         await logActivity({
 
-            user_id:req.user.id,
+            user_id: req.user.id,
 
-            action:"CREATE",
+            action: "CREATE",
 
-            module:"Purchases",
+            module: "Purchases",
 
             description:
-            `Created purchase ${purchase.id}`,
+                `Created purchase ${purchase.purchaseId}`,
 
-            ip_address:req.ip
+            ip_address: req.ip
 
         });
 
 
         res.status(201).json({
 
-            success:true,
+            success: true,
 
-            message:"Purchase created successfully.",
+            message: "Purchase created successfully.",
 
-            data:purchase
+            data: purchase
 
         });
 
 
-    } catch(error){
+    } catch (error) {
 
         res.status(400).json({
 
-            success:false,
+            success: false,
 
-            message:error.message
+            message: error.message
 
         });
 
@@ -59,32 +60,34 @@ const createPurchase = async (req, res) => {
 
 
 // Get all purchases
-const getPurchases = async(req,res)=>{
+const getPurchases = async (req, res) => {
 
-    try{
+    try {
 
         const purchases =
-            await purchaseService.getPurchases();
+            await purchaseService.getPurchases(
+                req.storeId
+            );
 
 
         res.json({
 
-            success:true,
+            success: true,
 
-            count:purchases.length,
+            count: purchases.length,
 
-            data:purchases
+            data: purchases
 
         });
 
 
-    }catch(error){
+    } catch (error) {
 
         res.status(500).json({
 
-            success:false,
+            success: false,
 
-            message:error.message
+            message: error.message
 
         });
 
@@ -96,32 +99,33 @@ const getPurchases = async(req,res)=>{
 
 
 // Get purchase by ID
-const getPurchase = async(req,res)=>{
+const getPurchase = async (req, res) => {
 
-    try{
+    try {
 
         const purchase =
             await purchaseService.getPurchase(
-                req.params.id
+                req.params.id,
+                req.storeId
             );
 
 
         res.json({
 
-            success:true,
+            success: true,
 
-            data:purchase
+            data: purchase
 
         });
 
 
-    }catch(error){
+    } catch (error) {
 
         res.status(404).json({
 
-            success:false,
+            success: false,
 
-            message:error.message
+            message: error.message
 
         });
 
@@ -133,10 +137,9 @@ const getPurchase = async(req,res)=>{
 
 
 // Update purchase
-const updatePurchase = async(req,res)=>{
+const updatePurchase = async (req, res) => {
 
-    try{
-
+    try {
 
         const purchase =
             await purchaseService.updatePurchase(
@@ -147,40 +150,38 @@ const updatePurchase = async(req,res)=>{
 
         await logActivity({
 
-            user_id:req.user.id,
+            user_id: req.user.id,
 
-            action:"UPDATE",
+            action: "UPDATE",
 
-            module:"Purchases",
+            module: "Purchases",
 
             description:
-            `Updated purchase ID ${req.params.id}`,
+                `Updated purchase ID ${req.params.id}`,
 
-            ip_address:req.ip
+            ip_address: req.ip
 
         });
-
 
 
         res.json({
 
-            success:true,
+            success: true,
 
-            message:"Purchase updated successfully.",
+            message: "Purchase updated successfully.",
 
-            data:purchase
+            data: purchase
 
         });
 
 
-    }catch(error){
-
+    } catch (error) {
 
         res.status(400).json({
 
-            success:false,
+            success: false,
 
-            message:error.message
+            message: error.message
 
         });
 
@@ -192,10 +193,9 @@ const updatePurchase = async(req,res)=>{
 
 
 // Delete purchase
-const deletePurchase = async(req,res)=>{
+const deletePurchase = async (req, res) => {
 
-    try{
-
+    try {
 
         await purchaseService.deletePurchase(
             req.params.id
@@ -204,39 +204,36 @@ const deletePurchase = async(req,res)=>{
 
         await logActivity({
 
-            user_id:req.user.id,
+            user_id: req.user.id,
 
-            action:"DELETE",
+            action: "DELETE",
 
-            module:"Purchases",
+            module: "Purchases",
 
             description:
-            `Deleted purchase ID ${req.params.id}`,
+                `Deleted purchase ID ${req.params.id}`,
 
-            ip_address:req.ip
+            ip_address: req.ip
 
         });
-
 
 
         res.json({
 
-            success:true,
+            success: true,
 
-            message:"Purchase deleted successfully."
+            message: "Purchase deleted successfully."
 
         });
 
 
-
-    }catch(error){
-
+    } catch (error) {
 
         res.status(400).json({
 
-            success:false,
+            success: false,
 
-            message:error.message
+            message: error.message
 
         });
 
@@ -248,9 +245,9 @@ const deletePurchase = async(req,res)=>{
 
 
 // Search purchases
-const searchPurchases = async(req,res)=>{
+const searchPurchases = async (req, res) => {
 
-    try{
+    try {
 
         const keyword =
             req.query.keyword || "";
@@ -258,28 +255,29 @@ const searchPurchases = async(req,res)=>{
 
         const purchases =
             await purchaseService.searchPurchases(
-                keyword
+                keyword,
+                req.storeId
             );
 
 
         res.json({
 
-            success:true,
+            success: true,
 
-            count:purchases.length,
+            count: purchases.length,
 
-            data:purchases
+            data: purchases
 
         });
 
 
-    }catch(error){
+    } catch (error) {
 
         res.status(500).json({
 
-            success:false,
+            success: false,
 
-            message:error.message
+            message: error.message
 
         });
 
@@ -291,13 +289,13 @@ const searchPurchases = async(req,res)=>{
 
 
 // Pagination
-const getPurchasesPaginated = async(req,res)=>{
+const getPurchasesPaginated = async (req, res) => {
 
-    try{
+    try {
 
         const page =
             Math.max(
-                parseInt(req.query.page)||1,
+                parseInt(req.query.page) || 1,
                 1
             );
 
@@ -305,7 +303,7 @@ const getPurchasesPaginated = async(req,res)=>{
         const limit =
             Math.min(
                 Math.max(
-                    parseInt(req.query.limit)||10,
+                    parseInt(req.query.limit) || 10,
                     1
                 ),
                 100
@@ -315,41 +313,42 @@ const getPurchasesPaginated = async(req,res)=>{
         const result =
             await purchaseService.getPurchasesPaginated(
                 page,
-                limit
+                limit,
+                req.storeId
             );
 
 
         res.json({
 
-            success:true,
+            success: true,
 
             page,
 
             limit,
 
-            total:result.total,
+            total: result.total,
 
             totalPages:
-            Math.ceil(
-                result.total / limit
-            ),
+                Math.ceil(
+                    result.total / limit
+                ),
 
             count:
-            result.purchases.length,
+                result.purchases.length,
 
             data:
-            result.purchases
+                result.purchases
 
         });
 
 
-    }catch(error){
+    } catch (error) {
 
         res.status(500).json({
 
-            success:false,
+            success: false,
 
-            message:error.message
+            message: error.message
 
         });
 
@@ -361,30 +360,32 @@ const getPurchasesPaginated = async(req,res)=>{
 
 
 // Purchase statistics
-const getPurchaseStatistics = async(req,res)=>{
+const getPurchaseStatistics = async (req, res) => {
 
-    try{
+    try {
 
         const stats =
-            await purchaseService.getPurchaseStatistics();
+            await purchaseService.getPurchaseStatistics(
+                req.storeId
+            );
 
 
         res.json({
 
-            success:true,
+            success: true,
 
-            data:stats
+            data: stats
 
         });
 
 
-    }catch(error){
+    } catch (error) {
 
         res.status(500).json({
 
-            success:false,
+            success: false,
 
-            message:error.message
+            message: error.message
 
         });
 

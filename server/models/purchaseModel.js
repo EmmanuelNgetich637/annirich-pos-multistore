@@ -1,10 +1,9 @@
 const db = require("../config/db");
 
-
 // Create purchase
 const createPurchase = async (purchase, connection = db) => {
-
     const {
+        store_id,
         supplier_id,
         invoice_number,
         total_amount,
@@ -12,20 +11,21 @@ const createPurchase = async (purchase, connection = db) => {
         created_by
     } = purchase;
 
-
     const [result] = await connection.query(
         `
         INSERT INTO purchases
         (
+            store_id,
             supplier_id,
             invoice_number,
             total_amount,
             remarks,
             created_by
         )
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?)
         `,
         [
+            store_id,
             supplier_id,
             invoice_number || null,
             total_amount,
@@ -34,9 +34,35 @@ const createPurchase = async (purchase, connection = db) => {
         ]
     );
 
-
     return result.insertId;
+};
 
+
+// Find purchase by invoice number within a store
+const getPurchaseByInvoiceNumber = async (
+    invoiceNumber,
+    storeId,
+    connection = db
+) => {
+    if (!invoiceNumber) {
+        return null;
+    }
+
+    const [rows] = await connection.query(
+        `
+        SELECT *
+        FROM purchases
+        WHERE invoice_number = ?
+        AND store_id = ?
+        LIMIT 1
+        `,
+        [
+            invoiceNumber,
+            storeId
+        ]
+    );
+
+    return rows[0];
 };
 
 
@@ -44,29 +70,30 @@ const createPurchase = async (purchase, connection = db) => {
 const createPurchaseItems = async (
     purchase_id,
     items,
+    storeId,
     connection = db
 ) => {
-
 
     for (const item of items) {
 
         const subtotal =
             item.quantity * item.buying_price;
 
-
         await connection.query(
             `
             INSERT INTO purchase_items
             (
+                store_id,
                 purchase_id,
                 product_id,
                 quantity,
                 buying_price,
                 subtotal
             )
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
             `,
             [
+                storeId,
                 purchase_id,
                 item.product_id,
                 item.quantity,
@@ -74,14 +101,12 @@ const createPurchaseItems = async (
                 subtotal
             ]
         );
-
     }
-
 };
 
 
 // Get all purchases
-const getAllPurchases = async () => {
+const getAllPurchases = async (storeId) => {
 
     const [rows] = await db.query(
         `
@@ -91,19 +116,19 @@ const getAllPurchases = async () => {
         FROM purchases p
         LEFT JOIN suppliers s
             ON p.supplier_id = s.id
+            AND s.store_id = p.store_id
+        WHERE p.store_id = ?
         ORDER BY p.id DESC
-        `
+        `,
+        [storeId]
     );
 
-
     return rows;
-
 };
 
 
 // Get purchase by ID
-const getPurchaseById = async (id) => {
-
+const getPurchaseById = async (id, storeId) => {
 
     const [purchase] = await db.query(
         `
@@ -113,16 +138,20 @@ const getPurchaseById = async (id) => {
         FROM purchases p
         LEFT JOIN suppliers s
             ON p.supplier_id = s.id
+            AND s.store_id = p.store_id
         WHERE p.id = ?
+        AND p.store_id = ?
+        LIMIT 1
         `,
-        [id]
+        [
+            id,
+            storeId
+        ]
     );
-
 
     if (!purchase[0]) {
         return null;
     }
-
 
     const [items] = await db.query(
         `
@@ -132,23 +161,30 @@ const getPurchaseById = async (id) => {
         FROM purchase_items pi
         LEFT JOIN products pr
             ON pi.product_id = pr.id
+            AND pr.store_id = pi.store_id
         WHERE pi.purchase_id = ?
+        AND pi.store_id = ?
         `,
-        [id]
+        [
+            id,
+            storeId
+        ]
     );
-
 
     return {
         ...purchase[0],
         items
     };
-
 };
 
 
 // Search purchases
-const searchPurchases = async (keyword) => {
+const searchPurchases = async (
+    keyword,
+    storeId
+) => {
 
+    const search = `%${keyword}%`;
 
     const [rows] = await db.query(
         `
@@ -158,33 +194,34 @@ const searchPurchases = async (keyword) => {
         FROM purchases p
         LEFT JOIN suppliers s
             ON p.supplier_id = s.id
-        WHERE
+            AND s.store_id = p.store_id
+        WHERE p.store_id = ?
+        AND (
             p.invoice_number LIKE ?
             OR s.name LIKE ?
+        )
         ORDER BY p.id DESC
         `,
         [
-            `%${keyword}%`,
-            `%${keyword}%`
+            storeId,
+            search,
+            search
         ]
     );
 
-
     return rows;
-
 };
 
 
 // Pagination
 const getPurchasesPaginated = async (
     page = 1,
-    limit = 10
+    limit = 10,
+    storeId
 ) => {
-
 
     const offset =
         (page - 1) * limit;
-
 
     const [rows] = await db.query(
         `
@@ -194,36 +231,37 @@ const getPurchasesPaginated = async (
         FROM purchases p
         LEFT JOIN suppliers s
             ON p.supplier_id = s.id
+            AND s.store_id = p.store_id
+        WHERE p.store_id = ?
         ORDER BY p.id DESC
         LIMIT ?
         OFFSET ?
         `,
         [
+            storeId,
             Number(limit),
             Number(offset)
         ]
     );
 
-
     const [[count]] = await db.query(
         `
         SELECT COUNT(*) AS total
         FROM purchases
-        `
+        WHERE store_id = ?
+        `,
+        [storeId]
     );
-
 
     return {
         purchases: rows,
         total: count.total
     };
-
 };
 
 
 // Purchase statistics
-const getPurchaseStatistics = async () => {
-
+const getPurchaseStatistics = async (storeId) => {
 
     const [[stats]] = await db.query(
         `
@@ -237,78 +275,36 @@ const getPurchaseStatistics = async () => {
         ) AS totalAmount,
 
         COUNT(
-            CASE 
-            WHEN status='Completed'
+            CASE
+            WHEN status = 'Completed'
             THEN 1
             END
         ) AS completedPurchases,
 
         COUNT(
-            CASE 
-            WHEN status='Cancelled'
+            CASE
+            WHEN status = 'Cancelled'
             THEN 1
             END
         ) AS cancelledPurchases
 
         FROM purchases
-        `
+        WHERE store_id = ?
+        `,
+        [storeId]
     );
-
 
     return stats;
-
-};
-
-
-// Count purchases by supplier
-const countPurchasesBySupplier = async (supplier_id, storeId) => {
-
-    const [[result]] = await db.query(
-        `
-        SELECT COUNT(*) AS count
-        FROM purchases
-        WHERE supplier_id = ?
-        AND store_id = ?
-        `,
-        [supplier_id, storeId]
-    );
-
-    return result.count;
-
-};
-
-const getPurchaseByInvoiceNumber = async (invoice_number) => {
-
-    const [rows] = await db.query(
-        `
-        SELECT *
-        FROM purchases
-        WHERE invoice_number = ?
-        LIMIT 1
-        `,
-        [invoice_number]
-    );
-
-    return rows[0];
-
 };
 
 
 module.exports = {
-
     createPurchase,
+    getPurchaseByInvoiceNumber,
     createPurchaseItems,
-
     getAllPurchases,
     getPurchaseById,
-
     searchPurchases,
     getPurchasesPaginated,
-
-    getPurchaseStatistics,
-
-    countPurchasesBySupplier,
-
-    getPurchaseByInvoiceNumber
-
+    getPurchaseStatistics
 };
