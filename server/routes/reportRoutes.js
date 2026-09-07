@@ -3,13 +3,13 @@ const express = require("express");
 const router = express.Router();
 
 const reportController =
-require("../controllers/reportController");
+    require("../controllers/reportController");
 
 const authenticate =
-require("../middleware/authMiddleware");
+    require("../middleware/authMiddleware");
 
 const authorize =
-require("../middleware/roleMiddleware");
+    require("../middleware/roleMiddleware");
 
 
 /*
@@ -51,6 +51,20 @@ router.get(
     authenticate,
     authorize("admin", "manager"),
     reportController.getExpenseReport
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| Inventory Report
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+    "/inventory",
+    authenticate,
+    authorize("admin", "manager"),
+    reportController.getInventoryReport
 );
 
 

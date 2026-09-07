@@ -1,5 +1,6 @@
 const Report = require("../models/reportModel");
 
+
 /*
 |--------------------------------------------------------------------------
 | Sales Report
@@ -8,15 +9,18 @@ const Report = require("../models/reportModel");
 
 const getSalesReport = async (
     startDate,
-    endDate
+    endDate,
+    storeId
 ) => {
 
     return await Report.getSalesReport(
         startDate,
-        endDate
+        endDate,
+        storeId
     );
 
 };
+
 
 /*
 |--------------------------------------------------------------------------
@@ -26,15 +30,18 @@ const getSalesReport = async (
 
 const getPurchaseReport = async (
     startDate,
-    endDate
+    endDate,
+    storeId
 ) => {
 
     return await Report.getPurchaseReport(
         startDate,
-        endDate
+        endDate,
+        storeId
     );
 
 };
+
 
 /*
 |--------------------------------------------------------------------------
@@ -44,15 +51,33 @@ const getPurchaseReport = async (
 
 const getExpenseReport = async (
     startDate,
-    endDate
+    endDate,
+    storeId
 ) => {
 
     return await Report.getExpenseReport(
         startDate,
-        endDate
+        endDate,
+        storeId
     );
 
 };
+
+
+/*
+|--------------------------------------------------------------------------
+| Inventory Report
+|--------------------------------------------------------------------------
+*/
+
+const getInventoryReport = async (storeId) => {
+
+    return await Report.getInventoryReport(
+        storeId
+    );
+
+};
+
 
 /*
 |--------------------------------------------------------------------------
@@ -62,13 +87,15 @@ const getExpenseReport = async (
 
 const getProfitReport = async (
     startDate,
-    endDate
+    endDate,
+    storeId
 ) => {
 
     const result =
         await Report.getProfitReport(
             startDate,
-            endDate
+            endDate,
+            storeId
         );
 
     return {
@@ -89,14 +116,11 @@ const getProfitReport = async (
 
 };
 
+
 module.exports = {
-
     getSalesReport,
-
     getPurchaseReport,
-
     getExpenseReport,
-
+    getInventoryReport,
     getProfitReport
-
 };

@@ -1,5 +1,6 @@
 const ReportService =
-require("../services/reportService");
+    require("../services/reportService");
+
 
 /*
 |--------------------------------------------------------------------------
@@ -19,7 +20,8 @@ const getSalesReport = async (req, res) => {
         const data =
             await ReportService.getSalesReport(
                 startDate,
-                endDate
+                endDate,
+                req.storeId
             );
 
         return res.status(200).json({
@@ -45,6 +47,7 @@ const getSalesReport = async (req, res) => {
     }
 
 };
+
 
 /*
 |--------------------------------------------------------------------------
@@ -64,7 +67,8 @@ const getPurchaseReport = async (req, res) => {
         const data =
             await ReportService.getPurchaseReport(
                 startDate,
-                endDate
+                endDate,
+                req.storeId
             );
 
         return res.status(200).json({
@@ -90,6 +94,7 @@ const getPurchaseReport = async (req, res) => {
     }
 
 };
+
 
 /*
 |--------------------------------------------------------------------------
@@ -109,7 +114,8 @@ const getExpenseReport = async (req, res) => {
         const data =
             await ReportService.getExpenseReport(
                 startDate,
-                endDate
+                endDate,
+                req.storeId
             );
 
         return res.status(200).json({
@@ -136,6 +142,47 @@ const getExpenseReport = async (req, res) => {
 
 };
 
+
+/*
+|--------------------------------------------------------------------------
+| Inventory Report
+|--------------------------------------------------------------------------
+*/
+
+const getInventoryReport = async (req, res) => {
+
+    try {
+
+        const data =
+            await ReportService.getInventoryReport(
+                req.storeId
+            );
+
+        return res.status(200).json({
+
+            success: true,
+
+            count: data.length,
+
+            data
+
+        });
+
+    } catch (error) {
+
+        return res.status(500).json({
+
+            success: false,
+
+            message: error.message
+
+        });
+
+    }
+
+};
+
+
 /*
 |--------------------------------------------------------------------------
 | Profit Report
@@ -154,7 +201,8 @@ const getProfitReport = async (req, res) => {
         const data =
             await ReportService.getProfitReport(
                 startDate,
-                endDate
+                endDate,
+                req.storeId
             );
 
         return res.status(200).json({
@@ -179,6 +227,7 @@ const getProfitReport = async (req, res) => {
 
 };
 
+
 module.exports = {
 
     getSalesReport,
@@ -186,6 +235,8 @@ module.exports = {
     getPurchaseReport,
 
     getExpenseReport,
+
+    getInventoryReport,
 
     getProfitReport
 
