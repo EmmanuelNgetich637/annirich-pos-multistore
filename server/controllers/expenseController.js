@@ -1,5 +1,9 @@
-const expenseService = require("../services/expenseService");
-const logActivity = require("../utils/activityLogger");
+const expenseService =
+    require("../services/expenseService");
+
+const logActivity =
+    require("../utils/activityLogger");
+
 
 // Create Expense
 const createExpense = async (req, res) => {
@@ -7,21 +11,18 @@ const createExpense = async (req, res) => {
     try {
 
         const expense =
-            await expenseService.createExpense(req.body);
+            await expenseService.createExpense(
+                req.body,
+                req.storeId
+            );
 
         await logActivity({
-
             user_id: req.user.id,
-
             action: "CREATE",
-
             module: "Expenses",
-
             description:
-            `Created expense ID ${expense.id}`,
-
+                `Created expense ID ${expense.id}`,
             ip_address: req.ip
-
         });
 
         res.status(201).json({
@@ -38,7 +39,6 @@ const createExpense = async (req, res) => {
         });
 
     }
-
 };
 
 
@@ -48,7 +48,9 @@ const getExpenses = async (req, res) => {
     try {
 
         const expenses =
-            await expenseService.getExpenses();
+            await expenseService.getExpenses(
+                req.storeId
+            );
 
         res.json({
             success: true,
@@ -64,7 +66,6 @@ const getExpenses = async (req, res) => {
         });
 
     }
-
 };
 
 
@@ -75,7 +76,8 @@ const getExpense = async (req, res) => {
 
         const expense =
             await expenseService.getExpense(
-                req.params.id
+                req.params.id,
+                req.storeId
             );
 
         res.json({
@@ -91,7 +93,6 @@ const getExpense = async (req, res) => {
         });
 
     }
-
 };
 
 
@@ -103,22 +104,17 @@ const updateExpense = async (req, res) => {
         const expense =
             await expenseService.updateExpense(
                 req.params.id,
-                req.body
+                req.body,
+                req.storeId
             );
 
         await logActivity({
-
             user_id: req.user.id,
-
             action: "UPDATE",
-
             module: "Expenses",
-
             description:
-            `Updated expense ID ${req.params.id}`,
-
+                `Updated expense ID ${req.params.id}`,
             ip_address: req.ip
-
         });
 
         res.json({
@@ -135,7 +131,6 @@ const updateExpense = async (req, res) => {
         });
 
     }
-
 };
 
 
@@ -145,22 +140,17 @@ const deleteExpense = async (req, res) => {
     try {
 
         await expenseService.deleteExpense(
-            req.params.id
+            req.params.id,
+            req.storeId
         );
 
         await logActivity({
-
             user_id: req.user.id,
-
             action: "DELETE",
-
             module: "Expenses",
-
             description:
-            `Deleted expense ID ${req.params.id}`,
-
+                `Deleted expense ID ${req.params.id}`,
             ip_address: req.ip
-
         });
 
         res.json({
@@ -176,7 +166,6 @@ const deleteExpense = async (req, res) => {
         });
 
     }
-
 };
 
 
@@ -187,7 +176,8 @@ const searchExpenses = async (req, res) => {
 
         const expenses =
             await expenseService.searchExpenses(
-                req.query.keyword
+                req.query.keyword || "",
+                req.storeId
             );
 
         res.json({
@@ -204,7 +194,6 @@ const searchExpenses = async (req, res) => {
         });
 
     }
-
 };
 
 
@@ -223,7 +212,8 @@ async (req, res) => {
         const result =
             await expenseService.getExpensesPaginated(
                 page,
-                limit
+                limit,
+                req.storeId
             );
 
         res.json({
@@ -244,7 +234,6 @@ async (req, res) => {
         });
 
     }
-
 };
 
 
@@ -255,7 +244,9 @@ async (req, res) => {
     try {
 
         const stats =
-            await expenseService.getExpenseStatistics();
+            await expenseService.getExpenseStatistics(
+                req.storeId
+            );
 
         res.json({
             success: true,
@@ -270,26 +261,16 @@ async (req, res) => {
         });
 
     }
-
 };
 
 
 module.exports = {
-
     createExpense,
-
     getExpenses,
-
     getExpense,
-
     updateExpense,
-
     deleteExpense,
-
     searchExpenses,
-
     getExpensesPaginated,
-
     getExpenseStatistics
-
 };

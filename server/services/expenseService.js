@@ -2,7 +2,7 @@ const Expense = require("../models/expenseModel");
 
 
 // Create Expense
-const createExpense = async (data) => {
+const createExpense = async (data, storeId) => {
 
     const {
         expense_name,
@@ -11,145 +11,173 @@ const createExpense = async (data) => {
         expense_date
     } = data;
 
-    const expenseId =
-        await Expense.createExpense({
-            expense_name,
-            amount,
-            description,
-            expense_date
-        });
+    if (!expense_name) {
+        throw new Error("Expense name is required.");
+    }
+
+    if (
+        amount === undefined ||
+        amount === null ||
+        Number(amount) < 0
+    ) {
+        throw new Error("Invalid expense amount.");
+    }
+
+    if (!expense_date) {
+        throw new Error("Expense date is required.");
+    }
+
+    const expenseId = await Expense.createExpense({
+        store_id: storeId,
+        expense_name,
+        amount,
+        description,
+        expense_date
+    });
 
     return {
         id: expenseId,
+        store_id: storeId,
         expense_name,
         amount,
         description,
         expense_date
     };
-
 };
 
 
 // Get All Expenses
-const getExpenses = async () => {
-
-    return await Expense.getAllExpenses();
-
+const getExpenses = async (storeId) => {
+    return await Expense.getAllExpenses(storeId);
 };
 
 
 // Get Expense By ID
-const getExpense = async (id) => {
+const getExpense = async (id, storeId) => {
 
     const expense =
-        await Expense.getExpenseById(id);
+        await Expense.getExpenseById(id, storeId);
 
     if (!expense) {
-
-        throw new Error(
-            "Expense not found."
-        );
-
+        throw new Error("Expense not found.");
     }
 
     return expense;
-
 };
 
 
 // Update Expense
 const updateExpense = async (
     id,
-    data
+    data,
+    storeId
 ) => {
 
     const expense =
-        await Expense.getExpenseById(id);
+        await Expense.getExpenseById(id, storeId);
 
     if (!expense) {
+        throw new Error("Expense not found.");
+    }
 
-        throw new Error(
-            "Expense not found."
-        );
+    if (!data.expense_name) {
+        throw new Error("Expense name is required.");
+    }
 
+    if (
+        data.amount === undefined ||
+        data.amount === null ||
+        Number(data.amount) < 0
+    ) {
+        throw new Error("Invalid expense amount.");
+    }
+
+    if (!data.expense_date) {
+        throw new Error("Expense date is required.");
     }
 
     await Expense.updateExpense(
         id,
-        data
+        data,
+        storeId
     );
 
-    return await Expense.getExpenseById(id);
-
+    return await Expense.getExpenseById(
+        id,
+        storeId
+    );
 };
 
 
 // Delete Expense
-const deleteExpense = async (id) => {
+const deleteExpense = async (
+    id,
+    storeId
+) => {
 
     const expense =
-        await Expense.getExpenseById(id);
-
-    if (!expense) {
-
-        throw new Error(
-            "Expense not found."
+        await Expense.getExpenseById(
+            id,
+            storeId
         );
 
+    if (!expense) {
+        throw new Error("Expense not found.");
     }
 
-    await Expense.deleteExpense(id);
-
+    await Expense.deleteExpense(
+        id,
+        storeId
+    );
 };
 
 
 // Search Expenses
-const searchExpenses = async (keyword) => {
+const searchExpenses = async (
+    keyword,
+    storeId
+) => {
 
     return await Expense.searchExpenses(
-        keyword
+        keyword,
+        storeId
     );
-
 };
 
 
 // Pagination
-const getExpensesPaginated =
-async (page, limit) => {
+const getExpensesPaginated = async (
+    page,
+    limit,
+    storeId
+) => {
 
     return await Expense.getExpensesPaginated(
         page,
-        limit
+        limit,
+        storeId
     );
-
 };
 
 
 // Statistics
-const getExpenseStatistics =
-async () => {
+const getExpenseStatistics = async (
+    storeId
+) => {
 
-    return await Expense.getExpenseStatistics();
-
+    return await Expense.getExpenseStatistics(
+        storeId
+    );
 };
 
 
 module.exports = {
-
     createExpense,
-
     getExpenses,
-
     getExpense,
-
     updateExpense,
-
     deleteExpense,
-
     searchExpenses,
-
     getExpensesPaginated,
-
     getExpenseStatistics
-
 };
