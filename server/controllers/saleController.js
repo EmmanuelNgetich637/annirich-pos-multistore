@@ -1,167 +1,142 @@
 const saleService = require("../services/saleService");
-const logActivity = require("../utils/activityLogger");
+
+const logActivity =
+    require("../utils/activityLogger");
+
 
 // CREATE SALE
-
-// CREATE SALE
-
 const createSale = async (req, res) => {
 
     try {
 
-        const data = {
-
-            ...req.body,
-
-            cashier_id: req.user.id
-
-        };
-
-
         const sale =
-            await saleService.createSale(data);
-
+            await saleService.createSale(
+                req.body,
+                req.user.id,
+                req.storeId
+            );
 
 
         await logActivity({
 
-            user_id:req.user.id,
+            user_id: req.user.id,
 
-            action:"CREATE",
+            action: "CREATE",
 
-            module:"Sales",
+            module: "Sales",
 
             description:
-            `Created sale receipt ${sale.receipt_number || sale.id}`,
+                `Created sale ${sale.saleId}`,
 
-            ip_address:req.ip
+            ip_address: req.ip
 
         });
-
 
 
         res.status(201).json({
 
-            success:true,
+            success: true,
 
-            message:"Sale created successfully.",
+            message:
+                "Sale created successfully.",
 
-            data:sale
+            data: sale
 
         });
 
 
-    } catch(error){
-
+    } catch (error) {
 
         res.status(400).json({
 
-            success:false,
+            success: false,
 
-            message:error.message
+            message: error.message
 
         });
-
 
     }
 
 };
-
 
 
 // GET ALL SALES
+const getSales = async (req, res) => {
 
-const getSales = async(req,res)=>{
-
-
-    try{
-
+    try {
 
         const sales =
-            await saleService.getSales();
-
-
-        res.json({
-
-            success:true,
-
-            count:sales.length,
-
-            data:sales
-
-        });
-
-
-
-    }catch(error){
-
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
-
-    }
-
-
-};
-
-
-
-// GET SALE BY ID
-
-const getSale = async(req,res)=>{
-
-
-    try{
-
-
-        const sale =
-            await saleService.getSale(
-                req.params.id
+            await saleService.getSales(
+                req.storeId
             );
 
 
         res.json({
 
-            success:true,
+            success: true,
 
-            data:sale
+            count: sales.length,
 
-        });
-
-
-
-    }catch(error){
-
-
-        res.status(404).json({
-
-            success:false,
-
-            message:error.message
+            data: sales
 
         });
 
+
+    } catch (error) {
+
+        res.status(500).json({
+
+            success: false,
+
+            message: error.message
+
+        });
 
     }
-
 
 };
 
 
+// GET SALE BY ID
+const getSale = async (req, res) => {
+
+    try {
+
+        const sale =
+            await saleService.getSale(
+                req.params.id,
+                req.storeId
+            );
+
+
+        res.json({
+
+            success: true,
+
+            data: sale
+
+        });
+
+
+    } catch (error) {
+
+        res.status(404).json({
+
+            success: false,
+
+            message: error.message
+
+        });
+
+    }
+
+};
+
 
 // SEARCH SALES
+const searchSales = async (req, res) => {
 
-const searchSales = async(req,res)=>{
-
-
-    try{
-
+    try {
 
         const keyword =
             req.query.keyword || "";
@@ -169,169 +144,153 @@ const searchSales = async(req,res)=>{
 
         const sales =
             await saleService.searchSales(
-                keyword
+                keyword,
+                req.storeId
             );
 
 
         res.json({
 
-            success:true,
+            success: true,
 
-            count:sales.length,
+            count: sales.length,
 
-            data:sales
+            data: sales
 
         });
 
 
-
-    }catch(error){
-
+    } catch (error) {
 
         res.status(500).json({
 
-            success:false,
+            success: false,
 
-            message:error.message
+            message: error.message
 
         });
 
-
     }
-
 
 };
 
 
-
 // PAGINATION
-
 const getSalesPaginated =
-async(req,res)=>{
+async (req, res) => {
 
-
-    try{
-
+    try {
 
         const page =
-        Math.max(
-            parseInt(req.query.page) || 1,
-            1
-        );
+            Math.max(
+                parseInt(req.query.page) || 1,
+                1
+            );
 
 
         const limit =
-        Math.min(
-            Math.max(
-                parseInt(req.query.limit)||10,
-                1
-            ),
-            100
-        );
-
+            Math.min(
+                Math.max(
+                    parseInt(req.query.limit) || 10,
+                    1
+                ),
+                100
+            );
 
 
         const result =
-        await saleService.getSalesPaginated(
-            page,
-            limit
-        );
-
+            await saleService.getSalesPaginated(
+                page,
+                limit,
+                req.storeId
+            );
 
 
         res.json({
 
-            success:true,
+            success: true,
 
             page,
 
             limit,
 
-            total:result.total,
+            total: result.total,
 
             totalPages:
-            Math.ceil(
-                result.total / limit
-            ),
+                Math.ceil(
+                    result.total / limit
+                ),
 
             count:
-            result.sales.length,
+                result.sales.length,
 
             data:
-            result.sales
+                result.sales
 
         });
 
-
-
-    }catch(error){
-
+    } catch (error) {
 
         res.status(500).json({
 
-            success:false,
+            success: false,
 
-            message:error.message
+            message: error.message
 
         });
 
-
     }
-
 
 };
 
 
-
 // STATISTICS
-
 const getSaleStatistics =
-async(req,res)=>{
+async (req, res) => {
 
-
-    try{
-
+    try {
 
         const stats =
-        await saleService.getSaleStatistics();
-
+            await saleService.getSaleStatistics(
+                req.storeId
+            );
 
 
         res.json({
 
-            success:true,
+            success: true,
 
-            data:stats
+            data: stats
 
         });
 
-
-    }catch(error){
-
+    } catch (error) {
 
         res.status(500).json({
 
-            success:false,
+            success: false,
 
-            message:error.message
+            message: error.message
 
         });
 
-
     }
-
 
 };
 
 
-
-module.exports={
+module.exports = {
 
     createSale,
+
     getSales,
+
     getSale,
+
     searchSales,
+
     getSalesPaginated,
+
     getSaleStatistics
 
 };

@@ -1,267 +1,249 @@
 const db = require("../config/db");
 
 
-const createSale = async (data) => {
-
-    const {
-        customer_id,
-        cashier_id,
-        payment_method,
-        subtotal,
-        discount,
-        total
-    } = data;
-
-
-    const [result] = await db.query(
-        `
-        INSERT INTO sales
-        (
-            customer_id,
-            cashier_id,
-            payment_method,
-            subtotal,
-            discount,
-            total
-        )
-        VALUES (?, ?, ?, ?, ?, ?)
-        `,
-        [
-            customer_id || null,
-            cashier_id,
-            payment_method,
-            subtotal,
-            discount || 0,
-            total
-        ]
-    );
-
-
-    return result.insertId;
-
-};
-
-
-
-const createSaleItem = async (item) => {
-
-    const {
-        sale_id,
-        product_id,
-        quantity,
-        selling_price
-    } = item;
-
-
-    await db.query(
-        `
-        INSERT INTO sale_items
-        (
-            sale_id,
-            product_id,
-            quantity,
-            selling_price
-        )
-        VALUES (?, ?, ?, ?)
-        `,
-        [
-            sale_id,
-            product_id,
-            quantity,
-            selling_price
-        ]
-    );
-
-};
-
-
-
-const getAllSales = async () => {
-
+// GET ALL SALES
+const getAllSales = async (storeId) => {
 
     const [rows] = await db.query(
         `
-        SELECT 
-            sales.*,
-            customers.name AS customer_name
-        FROM sales
+        SELECT
+            s.*,
+            c.name AS customer_name,
+            u.full_name AS cashier_name
+        FROM sales s
 
-        LEFT JOIN customers
-        ON sales.customer_id = customers.id
+        LEFT JOIN customers c
+            ON s.customer_id = c.id
+            AND c.store_id = s.store_id
 
-        ORDER BY sales.id DESC
-        `
+        LEFT JOIN users u
+            ON s.cashier_id = u.id
+            AND u.store_id = s.store_id
+
+        WHERE s.store_id = ?
+
+        ORDER BY s.id DESC
+        `,
+        [storeId]
     );
 
-
     return rows;
-
 };
 
 
-
-const getSaleById = async (id)=>{
-
+// GET SALE BY ID
+const getSaleById = async (id, storeId) => {
 
     const [sales] = await db.query(
         `
         SELECT
-            sales.*,
-            customers.name AS customer_name
+            s.*,
+            c.name AS customer_name,
+            u.full_name AS cashier_name
+        FROM sales s
 
-        FROM sales
+        LEFT JOIN customers c
+            ON s.customer_id = c.id
+            AND c.store_id = s.store_id
 
-        LEFT JOIN customers
-        ON sales.customer_id = customers.id
+        LEFT JOIN users u
+            ON s.cashier_id = u.id
+            AND u.store_id = s.store_id
 
-        WHERE sales.id=?
+        WHERE s.id = ?
+        AND s.store_id = ?
+
+        LIMIT 1
         `,
-        [id]
+        [id, storeId]
     );
 
-
-    if(!sales[0]){
+    if (!sales[0]) {
         return null;
     }
 
-
-    const [items]=await db.query(
+    const [items] = await db.query(
         `
         SELECT
-            sale_items.*,
-            products.name AS product_name
+            si.*,
+            p.name AS product_name
+        FROM sale_items si
 
-        FROM sale_items
+        LEFT JOIN products p
+            ON si.product_id = p.id
+            AND p.store_id = si.store_id
 
-        LEFT JOIN products
-        ON sale_items.product_id=products.id
+        WHERE si.sale_id = ?
+        AND si.store_id = ?
 
-        WHERE sale_items.sale_id=?
+        ORDER BY si.id ASC
         `,
-        [id]
+        [id, storeId]
     );
-
 
     return {
         ...sales[0],
         items
     };
 
-
 };
 
 
+// SEARCH SALES
+const searchSales = async (keyword, storeId) => {
 
-const searchSales = async(keyword)=>{
+    const search = `%${keyword}%`;
 
-
-    const [rows]=await db.query(
+    const [rows] = await db.query(
         `
         SELECT
-            sales.*,
-            customers.name AS customer_name
+            s.*,
+            c.name AS customer_name,
+            u.full_name AS cashier_name
+        FROM sales s
 
-        FROM sales
+        LEFT JOIN customers c
+            ON s.customer_id = c.id
+            AND c.store_id = s.store_id
 
-        LEFT JOIN customers
-        ON sales.customer_id=customers.id
+        LEFT JOIN users u
+            ON s.cashier_id = u.id
+            AND u.store_id = s.store_id
 
-        WHERE
-        customers.name LIKE ?
-        OR payment_method LIKE ?
+        WHERE s.store_id = ?
 
-        ORDER BY sales.id DESC
+        AND (
+            CAST(s.id AS CHAR) LIKE ?
+            OR c.name LIKE ?
+            OR u.full_name LIKE ?
+            OR s.payment_method LIKE ?
+            OR CAST(s.subtotal AS CHAR) LIKE ?
+            OR CAST(s.discount AS CHAR) LIKE ?
+            OR CAST(s.total AS CHAR) LIKE ?
+        )
+
+        ORDER BY s.id DESC
         `,
         [
-            `%${keyword}%`,
-            `%${keyword}%`
+            storeId,
+            search,
+            search,
+            search,
+            search,
+            search,
+            search,
+            search
         ]
     );
-
 
     return rows;
 
 };
 
 
+// PAGINATION
+const getSalesPaginated = async (
+    page = 1,
+    limit = 10,
+    storeId
+) => {
 
-const getSalesPaginated = async(page=1,limit=10)=>{
+    const offset =
+        (page - 1) * limit;
 
-
-    const offset=(page-1)*limit;
-
-
-    const [rows]=await db.query(
+    const [rows] = await db.query(
         `
         SELECT
-            sales.*,
-            customers.name AS customer_name
+            s.*,
+            c.name AS customer_name,
+            u.full_name AS cashier_name
+        FROM sales s
 
-        FROM sales
+        LEFT JOIN customers c
+            ON s.customer_id = c.id
+            AND c.store_id = s.store_id
 
-        LEFT JOIN customers
-        ON sales.customer_id=customers.id
+        LEFT JOIN users u
+            ON s.cashier_id = u.id
+            AND u.store_id = s.store_id
 
-        ORDER BY sales.id DESC
+        WHERE s.store_id = ?
+
+        ORDER BY s.id DESC
 
         LIMIT ?
         OFFSET ?
         `,
         [
+            storeId,
             Number(limit),
             Number(offset)
         ]
     );
 
-
-    const [[count]]=await db.query(
+    const [[count]] = await db.query(
         `
         SELECT COUNT(*) AS total
         FROM sales
-        `
+        WHERE store_id = ?
+        `,
+        [storeId]
     );
 
-
     return {
-        sales:rows,
-        total:count.total
+        sales: rows,
+        total: count.total
     };
-
 
 };
 
 
+// STATISTICS
+const getSaleStatistics = async (storeId) => {
 
-const getSaleStatistics = async()=>{
-
-
-    const [[stats]]=await db.query(
+    const [[stats]] = await db.query(
         `
         SELECT
 
-        COUNT(*) AS totalSales,
+            COUNT(*) AS totalSales,
 
-        SUM(total) AS totalRevenue
+            COALESCE(
+                SUM(subtotal),
+                0
+            ) AS totalSubtotal,
+
+            COALESCE(
+                SUM(discount),
+                0
+            ) AS totalDiscount,
+
+            COALESCE(
+                SUM(total),
+                0
+            ) AS totalAmount
 
         FROM sales
-        `
-    );
 
+        WHERE store_id = ?
+        `,
+        [storeId]
+    );
 
     return stats;
 
 };
 
 
+module.exports = {
 
-module.exports={
+    getAllSales,
 
-createSale,
-createSaleItem,
-getAllSales,
-getSaleById,
-searchSales,
-getSalesPaginated,
-getSaleStatistics
+    getSaleById,
+
+    searchSales,
+
+    getSalesPaginated,
+
+    getSaleStatistics
 
 };
