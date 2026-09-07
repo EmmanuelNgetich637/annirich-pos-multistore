@@ -1,5 +1,6 @@
 const dashboardService =
-require("../services/dashboardService");
+    require("../services/dashboardService");
+
 
 /*
 |--------------------------------------------------------------------------
@@ -12,7 +13,9 @@ const getDashboard = async (req, res) => {
     try {
 
         const data =
-            await dashboardService.getDashboard();
+            await dashboardService.getDashboard(
+                req.storeId
+            );
 
         return res.status(200).json({
 
@@ -37,6 +40,7 @@ const getDashboard = async (req, res) => {
     }
 
 };
+
 
 module.exports = {
 

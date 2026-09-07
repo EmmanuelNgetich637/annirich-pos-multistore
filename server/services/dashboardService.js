@@ -1,27 +1,28 @@
 const Dashboard = require("../models/dashboardModel");
 
+
 /*
 |--------------------------------------------------------------------------
 | Get Dashboard
 |--------------------------------------------------------------------------
 */
 
-const getDashboard = async () => {
+const getDashboard = async (storeId) => {
 
     const summary =
-        await Dashboard.getDashboardSummary();
+        await Dashboard.getDashboardSummary(storeId);
 
     const recentSales =
-        await Dashboard.getRecentSales();
+        await Dashboard.getRecentSales(storeId);
 
     const recentPurchases =
-        await Dashboard.getRecentPurchases();
+        await Dashboard.getRecentPurchases(storeId);
 
     const lowStockProducts =
-        await Dashboard.getLowStockProducts();
+        await Dashboard.getLowStockProducts(storeId);
 
     const monthlySales =
-        await Dashboard.getMonthlySales();
+        await Dashboard.getMonthlySales(storeId);
 
     return {
 
@@ -38,6 +39,7 @@ const getDashboard = async () => {
     };
 
 };
+
 
 module.exports = {
 

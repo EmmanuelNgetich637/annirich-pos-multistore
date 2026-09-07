@@ -6,82 +6,112 @@ const db = require("../config/db");
 |--------------------------------------------------------------------------
 */
 
-const getDashboardSummary = async () => {
+const getDashboardSummary = async (storeId) => {
 
-    const [[products]] = await db.query(`
+    const [[products]] = await db.query(
+        `
         SELECT COUNT(*) AS totalProducts
         FROM products
-    `);
+        WHERE store_id = ?
+        `,
+        [storeId]
+    );
 
-    const [[categories]] = await db.query(`
+    const [[categories]] = await db.query(
+        `
         SELECT COUNT(*) AS totalCategories
         FROM categories
-    `);
+        WHERE store_id = ?
+        `,
+        [storeId]
+    );
 
-    const [[customers]] = await db.query(`
+    const [[customers]] = await db.query(
+        `
         SELECT COUNT(*) AS totalCustomers
         FROM customers
-    `);
+        WHERE store_id = ?
+        `,
+        [storeId]
+    );
 
-    const [[suppliers]] = await db.query(`
+    const [[suppliers]] = await db.query(
+        `
         SELECT COUNT(*) AS totalSuppliers
         FROM suppliers
-    `);
+        WHERE store_id = ?
+        `,
+        [storeId]
+    );
 
-    const [[sales]] = await db.query(`
+    const [[sales]] = await db.query(
+        `
         SELECT
             COUNT(*) AS totalSales,
-            IFNULL(SUM(total),0) AS salesRevenue
+            IFNULL(SUM(total), 0) AS salesRevenue
         FROM sales
-    `);
+        WHERE store_id = ?
+        `,
+        [storeId]
+    );
 
-    const [[purchases]] = await db.query(`
+    const [[purchases]] = await db.query(
+        `
         SELECT
             COUNT(*) AS totalPurchases,
-            IFNULL(SUM(total_amount),0) AS purchaseCost
+            IFNULL(SUM(total_amount), 0) AS purchaseCost
         FROM purchases
-    `);
+        WHERE store_id = ?
+        `,
+        [storeId]
+    );
 
-    const [[expenses]] = await db.query(`
+    const [[expenses]] = await db.query(
+        `
         SELECT
             COUNT(*) AS totalExpenses,
-            IFNULL(SUM(amount),0) AS expenseAmount
+            IFNULL(SUM(amount), 0) AS expenseAmount
         FROM expenses
-    `);
+        WHERE store_id = ?
+        `,
+        [storeId]
+    );
 
-    const [[lowStock]] = await db.query(`
+    const [[lowStock]] = await db.query(
+        `
         SELECT COUNT(*) AS lowStockItems
         FROM products
-        WHERE quantity <= minimum_stock
-    `);
+        WHERE store_id = ?
+        AND quantity <= minimum_stock
+        `,
+        [storeId]
+    );
 
     return {
+        totalProducts: Number(products.totalProducts),
 
-        totalProducts: products.totalProducts,
+        totalCategories: Number(categories.totalCategories),
 
-        totalCategories: categories.totalCategories,
+        totalCustomers: Number(customers.totalCustomers),
 
-        totalCustomers: customers.totalCustomers,
+        totalSuppliers: Number(suppliers.totalSuppliers),
 
-        totalSuppliers: suppliers.totalSuppliers,
+        totalSales: Number(sales.totalSales),
 
-        totalSales: sales.totalSales,
+        salesRevenue: Number(sales.salesRevenue),
 
-        salesRevenue: sales.salesRevenue,
+        totalPurchases: Number(purchases.totalPurchases),
 
-        totalPurchases: purchases.totalPurchases,
+        purchaseCost: Number(purchases.purchaseCost),
 
-        purchaseCost: purchases.purchaseCost,
+        totalExpenses: Number(expenses.totalExpenses),
 
-        totalExpenses: expenses.totalExpenses,
+        expenseAmount: Number(expenses.expenseAmount),
 
-        expenseAmount: expenses.expenseAmount,
-
-        lowStockItems: lowStock.lowStockItems
-
+        lowStockItems: Number(lowStock.lowStockItems)
     };
-
 };
+
 
 /*
 |--------------------------------------------------------------------------
@@ -89,11 +119,13 @@ const getDashboardSummary = async () => {
 |--------------------------------------------------------------------------
 */
 
-const getRecentSales = async () => {
+const getRecentSales = async (storeId) => {
 
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+        `
         SELECT
             s.id,
+            s.store_id,
             c.name AS customer_name,
             s.total,
             s.payment_method,
@@ -101,13 +133,17 @@ const getRecentSales = async () => {
         FROM sales s
         LEFT JOIN customers c
             ON s.customer_id = c.id
+            AND c.store_id = s.store_id
+        WHERE s.store_id = ?
         ORDER BY s.created_at DESC
         LIMIT 10
-    `);
+        `,
+        [storeId]
+    );
 
     return rows;
-
 };
+
 
 /*
 |--------------------------------------------------------------------------
@@ -115,11 +151,13 @@ const getRecentSales = async () => {
 |--------------------------------------------------------------------------
 */
 
-const getRecentPurchases = async () => {
+const getRecentPurchases = async (storeId) => {
 
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+        `
         SELECT
             p.id,
+            p.store_id,
             s.name AS supplier_name,
             p.invoice_number,
             p.total_amount,
@@ -127,13 +165,17 @@ const getRecentPurchases = async () => {
         FROM purchases p
         LEFT JOIN suppliers s
             ON p.supplier_id = s.id
+            AND s.store_id = p.store_id
+        WHERE p.store_id = ?
         ORDER BY p.created_at DESC
         LIMIT 10
-    `);
+        `,
+        [storeId]
+    );
 
     return rows;
-
 };
+
 
 /*
 |--------------------------------------------------------------------------
@@ -141,22 +183,27 @@ const getRecentPurchases = async () => {
 |--------------------------------------------------------------------------
 */
 
-const getLowStockProducts = async () => {
+const getLowStockProducts = async (storeId) => {
 
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+        `
         SELECT
             id,
+            store_id,
             name,
             quantity,
             minimum_stock
         FROM products
-        WHERE quantity <= minimum_stock
+        WHERE store_id = ?
+        AND quantity <= minimum_stock
         ORDER BY quantity ASC
-    `);
+        `,
+        [storeId]
+    );
 
     return rows;
-
 };
+
 
 /*
 |--------------------------------------------------------------------------
@@ -164,27 +211,25 @@ const getLowStockProducts = async () => {
 |--------------------------------------------------------------------------
 */
 
-const getMonthlySales = async () => {
+const getMonthlySales = async (storeId) => {
 
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+        `
         SELECT
-
-            DATE_FORMAT(created_at,'%Y-%m') AS month,
-
+            DATE_FORMAT(created_at, '%Y-%m') AS month,
             COUNT(*) AS totalSales,
-
-            SUM(total) AS revenue
-
+            IFNULL(SUM(total), 0) AS revenue
         FROM sales
-
-        GROUP BY DATE_FORMAT(created_at,'%Y-%m')
-
+        WHERE store_id = ?
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
         ORDER BY month ASC
-    `);
+        `,
+        [storeId]
+    );
 
     return rows;
-
 };
+
 
 module.exports = {
 
@@ -199,4 +244,3 @@ module.exports = {
     getMonthlySales
 
 };
-
