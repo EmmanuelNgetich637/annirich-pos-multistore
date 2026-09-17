@@ -28,6 +28,9 @@ function CheckoutPanel({
     const [error, setError] =
         useState("");
 
+    const [mpesaWaiting, setMpesaWaiting] =
+        useState(false);
+
     const tax = 0;
 
     const discountAmount = Math.max(
@@ -112,20 +115,44 @@ function CheckoutPanel({
         try {
             setProcessing(true);
 
+            if (
+                paymentMethod ===
+                "M-Pesa"
+            ) {
+                setMpesaWaiting(true);
+            }
+
             await onComplete({
                 paymentMethod,
+
                 total,
-                discount: discountAmount,
+
+                discount:
+                    discountAmount,
+
                 amountPaid:
-                    paymentMethod === "Cash"
+                    paymentMethod ===
+                    "Cash"
                         ? paidAmount
                         : 0,
+
                 change,
+
                 phoneNumber:
-                    paymentMethod === "M-Pesa"
+                    paymentMethod ===
+                    "M-Pesa"
                         ? phoneNumber.trim()
                         : null
             });
+
+            /*
+             * Clear checkout fields after
+             * successful payment.
+             */
+            setDiscount(0);
+            setAmountPaid("");
+            setPhoneNumber("");
+
         } catch (error) {
             console.error(
                 "Checkout failed:",
@@ -136,8 +163,10 @@ function CheckoutPanel({
                 error?.message ||
                     "Unable to complete the sale."
             );
+
         } finally {
             setProcessing(false);
+            setMpesaWaiting(false);
         }
     };
 
@@ -174,6 +203,9 @@ function CheckoutPanel({
                             setDiscount(
                                 e.target.value
                             )
+                        }
+                        disabled={
+                            processing
                         }
                     />
                 </div>
@@ -216,7 +248,8 @@ function CheckoutPanel({
                     <button
                         type="button"
                         className={
-                            paymentMethod === "Cash"
+                            paymentMethod ===
+                            "Cash"
                                 ? "payment-option active"
                                 : "payment-option"
                         }
@@ -225,7 +258,9 @@ function CheckoutPanel({
                                 "Cash"
                             )
                         }
-                        disabled={processing}
+                        disabled={
+                            processing
+                        }
                     >
                         <FiDollarSign />
 
@@ -235,7 +270,8 @@ function CheckoutPanel({
                     <button
                         type="button"
                         className={
-                            paymentMethod === "M-Pesa"
+                            paymentMethod ===
+                            "M-Pesa"
                                 ? "payment-option active"
                                 : "payment-option"
                         }
@@ -244,7 +280,9 @@ function CheckoutPanel({
                                 "M-Pesa"
                             )
                         }
-                        disabled={processing}
+                        disabled={
+                            processing
+                        }
                     >
                         M-Pesa
                     </button>
@@ -252,7 +290,8 @@ function CheckoutPanel({
                     <button
                         type="button"
                         className={
-                            paymentMethod === "Card"
+                            paymentMethod ===
+                            "Card"
                                 ? "payment-option active"
                                 : "payment-option"
                         }
@@ -261,7 +300,9 @@ function CheckoutPanel({
                                 "Card"
                             )
                         }
-                        disabled={processing}
+                        disabled={
+                            processing
+                        }
                     >
                         <FiCreditCard />
 
@@ -273,7 +314,8 @@ function CheckoutPanel({
             </div>
 
             {/* CASH */}
-            {paymentMethod === "Cash" && (
+            {paymentMethod ===
+                "Cash" && (
                 <>
                     <div className="amount-paid">
 
@@ -285,13 +327,18 @@ function CheckoutPanel({
                             type="number"
                             min="0"
                             placeholder="Enter amount paid"
-                            value={amountPaid}
+                            value={
+                                amountPaid
+                            }
                             onChange={(e) =>
                                 setAmountPaid(
-                                    e.target.value
+                                    e.target
+                                        .value
                                 )
                             }
-                            disabled={processing}
+                            disabled={
+                                processing
+                            }
                         />
 
                     </div>
@@ -312,7 +359,8 @@ function CheckoutPanel({
             )}
 
             {/* M-PESA */}
-            {paymentMethod === "M-Pesa" && (
+            {paymentMethod ===
+                "M-Pesa" && (
                 <div className="amount-paid">
 
                     <label>
@@ -326,60 +374,85 @@ function CheckoutPanel({
                         <input
                             type="tel"
                             placeholder="0712345678"
-                            value={phoneNumber}
+                            value={
+                                phoneNumber
+                            }
                             onChange={(e) =>
                                 setPhoneNumber(
-                                    e.target.value
+                                    e.target
+                                        .value
                                 )
                             }
-                            disabled={processing}
+                            disabled={
+                                processing
+                            }
                         />
 
                     </div>
 
-                    <small>
-                        An M-Pesa payment prompt
-                        will be sent to this number.
-                    </small>
+                    {mpesaWaiting ? (
+                        <small>
+                            Waiting for the
+                            customer to
+                            complete the
+                            M-Pesa payment...
+                        </small>
+                    ) : (
+                        <small>
+                            An M-Pesa payment
+                            prompt will be
+                            sent to this
+                            number.
+                        </small>
+                    )}
 
                 </div>
             )}
 
             {/* CARD */}
-            {paymentMethod === "Card" && (
+            {paymentMethod ===
+                "Card" && (
                 <div className="card-payment-info">
 
                     <p>
-                        Card payment integration
-                        will be connected here.
+                        Card payment
+                        integration will
+                        be connected here.
                     </p>
 
                     <small>
-                        The sale will not be submitted
-                        until a card payment provider
+                        The sale will not be
+                        submitted until a
+                        card payment provider
                         is connected.
                     </small>
 
                 </div>
             )}
 
-            {/* ERROR */}
             {error && (
                 <div className="checkout-error">
                     {error}
                 </div>
             )}
 
-            {/* COMPLETE SALE */}
             <button
                 type="button"
                 className="complete-sale-btn"
-                disabled={!canComplete}
-                onClick={handleCompleteSale}
+                disabled={
+                    !canComplete
+                }
+                onClick={
+                    handleCompleteSale
+                }
             >
                 {processing
-                    ? "Processing..."
-                    : paymentMethod === "M-Pesa"
+                    ? paymentMethod ===
+                      "M-Pesa"
+                        ? "Waiting for M-Pesa..."
+                        : "Processing..."
+                    : paymentMethod ===
+                      "M-Pesa"
                     ? "Send M-Pesa Request"
                     : "Complete Sale"}
             </button>

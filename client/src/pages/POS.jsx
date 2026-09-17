@@ -9,7 +9,10 @@ import CheckoutPanel from "../components/pos/CheckoutPanel";
 
 import { getProducts } from "../api/productApi";
 import { createSale } from "../api/saleApi";
-import { initiateMpesaPayment } from "../api/mpesaApi";
+import {
+    initiateMpesaPayment,
+    getMpesaTransaction
+} from "../api/mpesaApi";
 
 function POS() {
     const [products, setProducts] = useState([]);
@@ -167,6 +170,112 @@ function POS() {
     );
 
     /*
+     * Wait for the backend callback to
+     * confirm the M-Pesa transaction.
+     */
+    const waitForMpesaPayment = async (
+        transactionId
+    ) => {
+        const maxAttempts = 30;
+        const interval = 2000;
+
+        for (
+            let attempt = 1;
+            attempt <= maxAttempts;
+            attempt++
+        ) {
+            try {
+                const response =
+                    await getMpesaTransaction(
+                        transactionId
+                    );
+
+                const transaction =
+                    response.data;
+
+                console.log(
+                    `M-Pesa transaction status (attempt ${attempt}):`,
+                    transaction?.status
+                );
+
+                if (
+                    transaction?.status ===
+                    "completed"
+                ) {
+                    return transaction;
+                }
+
+                if (
+                    transaction?.status ===
+                        "failed" ||
+                    transaction?.status ===
+                        "cancelled"
+                ) {
+                    throw new Error(
+                        transaction.result_desc ||
+                            "M-Pesa payment failed or was cancelled."
+                    );
+                }
+
+                /*
+                 * Transaction is still pending.
+                 */
+                if (
+                    attempt <
+                    maxAttempts
+                ) {
+                    await new Promise(
+                        (resolve) =>
+                            setTimeout(
+                                resolve,
+                                interval
+                            )
+                    );
+                }
+
+            } catch (error) {
+                /*
+                 * If this is our own payment
+                 * failure error, stop polling.
+                 */
+                if (
+                    error.message &&
+                    !error.response
+                ) {
+                    throw error;
+                }
+
+                /*
+                 * Network/server error.
+                 *
+                 * Continue polling unless this
+                 * was the final attempt.
+                 */
+                if (
+                    attempt >=
+                    maxAttempts
+                ) {
+                    throw new Error(
+                        "Unable to confirm the M-Pesa payment. Please check the transaction status before retrying."
+                    );
+                }
+
+                await new Promise(
+                    (resolve) =>
+                        setTimeout(
+                            resolve,
+                            interval
+                        )
+                );
+            }
+        }
+
+        throw new Error(
+            "M-Pesa payment confirmation timed out. Please check the transaction status before retrying."
+        );
+    };
+
+    /*
      * Create a real sale in the backend.
      */
     const completeSale = async (checkout) => {
@@ -178,16 +287,14 @@ function POS() {
             );
         }
 
-        /*
-         * Convert the frontend cart into
-         * the exact backend sales payload.
-         */
         const salePayload = {
             items: cart.map((item) => ({
                 product_id: item.id,
+
                 quantity: Number(
                     item.quantity
                 ),
+
                 selling_price: Number(
                     item.selling_price ??
                     item.price ??
@@ -209,7 +316,7 @@ function POS() {
         try {
             /*
              * STEP 1
-             * Create the sale in MySQL.
+             * Create sale.
              */
             const saleResponse =
                 await createSale(
@@ -237,12 +344,7 @@ function POS() {
 
             /*
              * STEP 2
-             * M-Pesa payment.
-             *
-             * The sale is created first with
-             * payment_status = pending.
-             *
-             * Then we initiate the STK Push.
+             * M-Pesa.
              */
             if (
                 checkout.paymentMethod ===
@@ -270,36 +372,57 @@ function POS() {
                     mpesaResponse
                 );
 
+                const transactionId =
+                    mpesaResponse.data
+                        ?.transactionId;
+
+                if (!transactionId) {
+                    throw new Error(
+                        "M-Pesa request was sent but no transaction ID was returned."
+                    );
+                }
+
                 /*
-                 * Keep the cart visible while
-                 * the customer completes the
-                 * M-Pesa payment.
-                 *
-                 * The sale is already pending
-                 * on the backend.
+                 * The STK request was accepted.
+                 * Now wait for the callback.
                  */
+                const completedTransaction =
+                    await waitForMpesaPayment(
+                        transactionId
+                    );
+
+                console.log(
+                    "M-Pesa payment completed:",
+                    completedTransaction
+                );
+
+                /*
+                 * Payment is genuinely complete.
+                 */
+                setCart([]);
+
+                await loadProducts();
+
                 setRefreshStats(
                     (current) =>
                         current + 1
                 );
 
-                await loadProducts();
-
                 return {
                     success: true,
+
                     saleId,
+
                     mpesa: true,
-                    response:
-                        mpesaResponse
+
+                    transaction:
+                        completedTransaction
                 };
             }
 
             /*
              * STEP 3
-             * Cash/Card sale.
-             *
-             * The backend already marks these
-             * payment methods as paid.
+             * Cash/Card.
              */
             setCart([]);
 
@@ -312,9 +435,12 @@ function POS() {
 
             return {
                 success: true,
+
                 saleId,
+
                 mpesa: false
             };
+
         } catch (error) {
             console.error(
                 "Failed to complete sale:",
@@ -337,9 +463,7 @@ function POS() {
 
     /*
      * Convert backend products into
-     * the structure expected by POS.
-     *
-     * Only active products are shown.
+     * POS structure.
      */
     const posProducts = products
         .filter(
@@ -383,7 +507,9 @@ function POS() {
             />
 
             <POSStats
-                refreshKey={refreshStats}
+                refreshKey={
+                    refreshStats
+                }
             />
 
             {loadingProducts && (

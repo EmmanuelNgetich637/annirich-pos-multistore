@@ -29,4 +29,4 @@ export const getMpesaTransactions = async () => {
     );
 
     return response.data;
-};
+}; 
