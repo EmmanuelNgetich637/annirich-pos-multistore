@@ -9,18 +9,7 @@ const getAllSales = async (storeId) => {
         SELECT
             s.*,
             c.name AS customer_name,
-            u.full_name AS cashier_name,
-
-            COALESCE(
-                (
-                    SELECT SUM(si.quantity)
-                    FROM sale_items si
-                    WHERE si.sale_id = s.id
-                    AND si.store_id = s.store_id
-                ),
-                0
-            ) AS items_count
-
+            u.full_name AS cashier_name
         FROM sales s
 
         LEFT JOIN customers c
@@ -50,18 +39,7 @@ const getSaleById = async (id, storeId) => {
         SELECT
             s.*,
             c.name AS customer_name,
-            u.full_name AS cashier_name,
-
-            COALESCE(
-                (
-                    SELECT SUM(si.quantity)
-                    FROM sale_items si
-                    WHERE si.sale_id = s.id
-                    AND si.store_id = s.store_id
-                ),
-                0
-            ) AS items_count
-
+            u.full_name AS cashier_name
         FROM sales s
 
         LEFT JOIN customers c
@@ -152,18 +130,7 @@ const searchSales = async (
         SELECT
             s.*,
             c.name AS customer_name,
-            u.full_name AS cashier_name,
-
-            COALESCE(
-                (
-                    SELECT SUM(si.quantity)
-                    FROM sale_items si
-                    WHERE si.sale_id = s.id
-                    AND si.store_id = s.store_id
-                ),
-                0
-            ) AS items_count
-
+            u.full_name AS cashier_name
         FROM sales s
 
         LEFT JOIN customers c
@@ -181,7 +148,6 @@ const searchSales = async (
             OR c.name LIKE ?
             OR u.full_name LIKE ?
             OR s.payment_method LIKE ?
-            OR s.payment_status LIKE ?
             OR CAST(s.subtotal AS CHAR) LIKE ?
             OR CAST(s.discount AS CHAR) LIKE ?
             OR CAST(s.total AS CHAR) LIKE ?
@@ -191,7 +157,6 @@ const searchSales = async (
         `,
         [
             storeId,
-            search,
             search,
             search,
             search,
@@ -222,18 +187,7 @@ const getSalesPaginated = async (
         SELECT
             s.*,
             c.name AS customer_name,
-            u.full_name AS cashier_name,
-
-            COALESCE(
-                (
-                    SELECT SUM(si.quantity)
-                    FROM sale_items si
-                    WHERE si.sale_id = s.id
-                    AND si.store_id = s.store_id
-                ),
-                0
-            ) AS items_count
-
+            u.full_name AS cashier_name
         FROM sales s
 
         LEFT JOIN customers c
@@ -276,6 +230,7 @@ const getSalesPaginated = async (
 
 
 // STATISTICS
+// STATISTICS
 const getSaleStatistics = async (
     storeId
 ) => {
@@ -305,13 +260,9 @@ const getSaleStatistics = async (
                 (
                     SELECT SUM(si.quantity)
                     FROM sale_items si
-
                     INNER JOIN sales s2
                         ON si.sale_id = s2.id
-                        AND si.store_id = s2.store_id
-
                     WHERE s2.store_id = ?
-                    AND s2.payment_status = 'paid'
                     AND si.store_id = ?
                 ),
                 0
@@ -320,7 +271,6 @@ const getSaleStatistics = async (
         FROM sales s
 
         WHERE s.store_id = ?
-        AND s.payment_status = 'paid'
         `,
         [
             storeId,
@@ -331,8 +281,7 @@ const getSaleStatistics = async (
 
     return stats;
 
-};
-
+}; 
 
 module.exports = {
 

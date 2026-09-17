@@ -5,27 +5,56 @@ import {
     FiXCircle
 } from "react-icons/fi";
 
-function CategoryStats() {
+function CategoryStats({
+    categories = []
+}) {
+
+    const totalCategories =
+        categories.length;
+
+    const activeCategories =
+        categories.filter(
+            (category) =>
+                String(category.status || "")
+                    .toLowerCase() === "active"
+        ).length;
+
+    const inactiveCategories =
+        categories.filter(
+            (category) =>
+                String(category.status || "")
+                    .toLowerCase() === "inactive"
+        ).length;
+
+    const productsAssigned =
+        categories.reduce(
+            (total, category) =>
+                total +
+                Number(
+                    category.product_count || 0
+                ),
+            0
+        );
 
     const stats = [
         {
             title: "Total Categories",
-            value: 4,
+            value: totalCategories,
             icon: <FiLayers />
         },
         {
             title: "Active Categories",
-            value: 3,
+            value: activeCategories,
             icon: <FiCheckCircle />
         },
         {
             title: "Products Assigned",
-            value: 63,
+            value: productsAssigned,
             icon: <FiPackage />
         },
         {
             title: "Inactive Categories",
-            value: 1,
+            value: inactiveCategories,
             icon: <FiXCircle />
         }
     ];

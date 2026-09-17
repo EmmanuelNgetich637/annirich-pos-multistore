@@ -5,34 +5,37 @@ import {
     FiClock
 } from "react-icons/fi";
 
-function SalesStats({ sales }) {
+function SalesStats({ sales = [] }) {
 
-    const completedSales = sales.filter(
-        (sale) => sale.status === "Completed"
-    );
+    const completedSales =
+        sales.filter(
+            (sale) =>
+                sale.status === "Completed"
+        );
 
-    const totalSales = completedSales.reduce(
-        (sum, sale) => sum + sale.total,
-        0
-    );
+    const totalSales =
+        completedSales.reduce(
+            (sum, sale) =>
+                sum + Number(sale.total || 0),
+            0
+        );
 
-    const totalItems = completedSales.reduce(
-        (sum, sale) => sum + sale.items,
-        0
-    );
+    const totalItems =
+        completedSales.reduce(
+            (sum, sale) =>
+                sum + Number(sale.items || 0),
+            0
+        );
 
-    const averageSale =
-        completedSales.length > 0
-            ? totalSales / completedSales.length
-            : 0;
-
-    const pendingSales = sales.filter(
-        (sale) => sale.status === "Pending"
-    ).length;
+    const pendingSales =
+        sales.filter(
+            (sale) =>
+                sale.status === "Pending"
+        ).length;
 
     const stats = [
         {
-            title: "Today's Sales",
+            title: "Completed Sales",
             value: `KSh ${totalSales.toLocaleString()}`,
             icon: <FiDollarSign />
         },
@@ -66,7 +69,9 @@ function SalesStats({ sales }) {
                     </div>
 
                     <div>
-                        <span>{stat.title}</span>
+                        <span>
+                            {stat.title}
+                        </span>
 
                         <strong>
                             {stat.value}

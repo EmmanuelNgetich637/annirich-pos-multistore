@@ -1,10 +1,11 @@
-import { FiPlus, FiSearch } from "react-icons/fi";
+import { FiSearch } from "react-icons/fi";
 
 function TableToolbar({
     search,
     setSearch,
     category,
     setCategory,
+    categories = [],
     status,
     setStatus,
     action
@@ -22,7 +23,7 @@ function TableToolbar({
 
                     <input
                         type="text"
-                        placeholder="Search products..."
+                        placeholder="Search..."
                         value={search}
                         onChange={(e) =>
                             setSearch(e.target.value)
@@ -31,26 +32,36 @@ function TableToolbar({
 
                 </div>
 
-                <select
-                    value={category}
-                    onChange={(e) =>
-                        setCategory(e.target.value)
-                    }
-                >
+                {setCategory &&
+                    categories.length > 0 && (
+                        <select
+                            value={category}
+                            onChange={(e) =>
+                                setCategory(
+                                    e.target.value
+                                )
+                            }
+                        >
 
-                    <option value="All">
-                        All Categories
-                    </option>
+                            <option value="All">
+                                All Categories
+                            </option>
 
-                    <option value="Paints">
-                        Paints
-                    </option>
+                            {categories.map(
+                                (item) => (
+                                    <option
+                                        key={item.id}
+                                        value={
+                                            item.name
+                                        }
+                                    >
+                                        {item.name}
+                                    </option>
+                                )
+                            )}
 
-                    <option value="Plumbing">
-                        Plumbing
-                    </option>
-
-                </select>
+                        </select>
+                    )}
 
                 <select
                     value={status}

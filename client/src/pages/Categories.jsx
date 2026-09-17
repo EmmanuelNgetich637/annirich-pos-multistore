@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import PageHeader from "../components/common/PageHeader";
 import TableToolbar from "../components/common/TableToolbar";
@@ -8,13 +8,32 @@ import CategoryStats from "../components/categories/CategoryStats";
 import CategoryRow from "../components/categories/CategoryRow";
 import CategoryModal from "../components/categories/CategoryModal";
 
-import categories from "../data/categories";
+import {
+    getCategories,
+    deleteCategory
+} from "../api/categoryApi";
 
 function Categories() {
 
+    const [categories, setCategories] = useState([]);
+
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("All");
-    const [openModal, setOpenModal] = useState(false);
+
+    const [openModal, setOpenModal] =
+        useState(false);
+
+    const [editingCategory, setEditingCategory] =
+        useState(null);
+
+    const [loading, setLoading] =
+        useState(true);
+
+    const [error, setError] =
+        useState("");
+
+    const [deleteLoading, setDeleteLoading] =
+        useState(false);
 
     const columns = [
         "Category",
@@ -24,27 +43,157 @@ function Categories() {
         "Actions"
     ];
 
-    const filteredCategories = categories.filter(
-        (category) => {
+    const loadCategories = async () => {
 
-            const matchesSearch =
-                category.name
-                    .toLowerCase()
-                    .includes(search.toLowerCase()) ||
-                category.description
-                    .toLowerCase()
-                    .includes(search.toLowerCase());
+        try {
 
-            const matchesStatus =
-                status === "All" ||
-                category.status === status;
+            setLoading(true);
+            setError("");
 
-            return (
-                matchesSearch &&
-                matchesStatus
+            const response =
+                await getCategories();
+
+            const categoryData =
+                response?.data || [];
+
+            setCategories(
+                Array.isArray(categoryData)
+                    ? categoryData
+                    : []
             );
+
+        } catch (err) {
+
+            console.error(
+                "Failed to load categories:",
+                err
+            );
+
+            setError(
+                err?.response?.data?.message ||
+                "Failed to load categories."
+            );
+
+        } finally {
+
+            setLoading(false);
+
         }
-    );
+
+    };
+
+
+    useEffect(() => {
+        loadCategories();
+    }, []);
+
+
+    const handleAdd = () => {
+
+        setEditingCategory(null);
+        setOpenModal(true);
+
+    };
+
+
+    const handleEdit = (category) => {
+
+        setEditingCategory(category);
+        setOpenModal(true);
+
+    };
+
+
+    const handleCloseModal = () => {
+
+        setOpenModal(false);
+        setEditingCategory(null);
+
+    };
+
+
+    const handleDelete = async (category) => {
+
+        const confirmed =
+            window.confirm(
+                `Delete "${category.name}"?`
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+
+            setDeleteLoading(true);
+            setError("");
+
+            await deleteCategory(
+                category.id
+            );
+
+            await loadCategories();
+
+        } catch (err) {
+
+            console.error(
+                "Failed to delete category:",
+                err
+            );
+
+            setError(
+                err?.response?.data?.message ||
+                "Failed to delete category."
+            );
+
+        } finally {
+
+            setDeleteLoading(false);
+
+        }
+
+    };
+
+
+    const filteredCategories =
+        categories.filter(
+            (category) => {
+
+                const name =
+                    category.name || "";
+
+                const description =
+                    category.description || "";
+
+                const categoryStatus =
+                    String(
+                        category.status || ""
+                    ).toLowerCase();
+
+                const searchTerm =
+                    search.toLowerCase();
+
+                const matchesSearch =
+                    name
+                        .toLowerCase()
+                        .includes(searchTerm) ||
+                    description
+                        .toLowerCase()
+                        .includes(searchTerm);
+
+                const matchesStatus =
+                    status === "All" ||
+                    categoryStatus ===
+                        status.toLowerCase();
+
+                return (
+                    matchesSearch &&
+                    matchesStatus
+                );
+
+            }
+        );
+
 
     return (
         <>
@@ -55,16 +204,18 @@ function Categories() {
                 action={
                     <button
                         className="primary-btn"
-                        onClick={() =>
-                            setOpenModal(true)
-                        }
+                        onClick={handleAdd}
                     >
                         Add Category
                     </button>
                 }
             />
 
-            <CategoryStats />
+
+            <CategoryStats
+                categories={categories}
+            />
+
 
             <TableToolbar
                 search={search}
@@ -76,37 +227,78 @@ function Categories() {
                 action={
                     <button
                         className="primary-btn"
-                        onClick={() =>
-                            setOpenModal(true)
-                        }
+                        onClick={handleAdd}
                     >
                         Add Category
                     </button>
                 }
             />
 
-            <DataTable columns={columns}>
 
-                {filteredCategories.map(
-                    (category) => (
-                        <CategoryRow
-                            key={category.id}
-                            category={category}
-                        />
-                    )
-                )}
+            {loading && (
+                <div className="loading-state">
+                    Loading categories...
+                </div>
+            )}
 
-            </DataTable>
+
+            {error && (
+                <div className="error-state">
+                    {error}
+                </div>
+            )}
+
+
+            {deleteLoading && (
+                <div className="loading-state">
+                    Deleting category...
+                </div>
+            )}
+
+
+            {!loading && !error && (
+                <>
+
+                    <DataTable
+                        columns={columns}
+                    >
+
+                        {filteredCategories.map(
+                            (category) => (
+
+                                <CategoryRow
+                                    key={category.id}
+                                    category={category}
+                                    onEdit={handleEdit}
+                                    onDelete={handleDelete}
+                                />
+
+                            )
+                        )}
+
+                    </DataTable>
+
+
+                    {filteredCategories.length === 0 && (
+                        <div className="empty-state">
+                            No categories found.
+                        </div>
+                    )}
+
+                </>
+            )}
+
 
             <CategoryModal
                 open={openModal}
-                onClose={() =>
-                    setOpenModal(false)
-                }
+                onClose={handleCloseModal}
+                onCreated={loadCategories}
+                category={editingCategory}
             />
 
         </>
     );
+
 }
 
 export default Categories;

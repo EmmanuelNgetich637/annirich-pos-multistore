@@ -6,28 +6,40 @@ import {
 
 import StatusBadge from "../common/StatusBadge";
 
-function CategoryRow({ category }) {
+function CategoryRow({
+    category,
+    onEdit,
+    onDelete,
+    onView
+}) {
+
+    const productCount =
+        Number(category.product_count || 0);
+
+    const status =
+        String(category.status || "")
+            .toLowerCase();
 
     return (
         <tr>
 
             <td>
                 <strong>
-                    {category.name}
+                    {category.name || "—"}
                 </strong>
             </td>
 
             <td>
-                {category.description}
+                {category.description || "—"}
             </td>
 
             <td>
-                {category.productCount}
+                {productCount.toLocaleString()}
             </td>
 
             <td>
                 <StatusBadge
-                    status={category.status}
+                    status={status}
                 />
             </td>
 
@@ -35,15 +47,33 @@ function CategoryRow({ category }) {
 
                 <div className="table-actions">
 
-                    <button className="icon-btn">
+                    <button
+                        className="icon-btn"
+                        onClick={() =>
+                            onView?.(category)
+                        }
+                        title="View category"
+                    >
                         <FiEye />
                     </button>
 
-                    <button className="icon-btn">
+                    <button
+                        className="icon-btn"
+                        onClick={() =>
+                            onEdit?.(category)
+                        }
+                        title="Edit category"
+                    >
                         <FiEdit2 />
                     </button>
 
-                    <button className="icon-btn danger">
+                    <button
+                        className="icon-btn danger"
+                        onClick={() =>
+                            onDelete?.(category)
+                        }
+                        title="Delete category"
+                    >
                         <FiTrash2 />
                     </button>
 

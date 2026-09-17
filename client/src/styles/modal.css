@@ -1,265 +1,632 @@
-.modal-overlay{
-    position:fixed;
-    inset:0;
-    background:rgba(15,23,42,.55);
-    backdrop-filter:blur(6px);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:24px;
-    z-index:1000;
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .55);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 1000;
+
+    /* Prevent the page behind the modal from scrolling */
+    overflow: hidden;
 }
 
-.modal{
-    width:100%;
-    max-width:850px;
-    background:#fff;
-    border-radius:18px;
-    overflow:hidden;
-    box-shadow:0 24px 60px rgba(0,0,0,.25);
-    animation:modalFade .25s ease;
+.modal {
+    width: 100%;
+    max-width: 850px;
+    height: 90vh;
+    max-height: 90vh;
+
+    background: #fff;
+    border-radius: 18px;
+
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .25);
+
+    animation: modalFade .25s ease;
+
+    /* Important */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
-@keyframes modalFade{
-    from{
-        opacity:0;
-        transform:translateY(20px) scale(.98);
+@keyframes modalFade {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(.98);
     }
-    to{
-        opacity:1;
-        transform:translateY(0) scale(1);
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
     }
 }
 
-.modal-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:22px 28px;
-    border-bottom:1px solid #E2E8F0;
+
+/* =========================
+   MODAL HEADER
+========================= */
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 22px 28px;
+
+    border-bottom: 1px solid #E2E8F0;
+
+    flex-shrink: 0;
 }
 
-.modal-header h2{
-    margin:0;
-    font-size:22px;
+.modal-header h2 {
+    margin: 0;
+    font-size: 22px;
 }
 
-.close-btn{
-    border:none;
-    background:transparent;
-    cursor:pointer;
-    font-size:22px;
+.modal-header p {
+    margin: 6px 0 0;
+    color: #64748B;
+    font-size: 14px;
 }
 
-.modal-body{
-    padding:28px;
+.close-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 22px;
+
+    flex-shrink: 0;
 }
 
-.form-grid{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:20px;
+
+/* =========================
+   MODAL BODY
+========================= */
+
+.modal-body {
+    padding: 28px;
+
+    /*
+       The body is the only part that scrolls.
+       This keeps the buttons visible.
+    */
+    overflow-y: auto;
+
+    flex: 1;
+    min-height: 0;
+
+    /*
+       Prevents content from pushing
+       the footer outside the screen.
+    */
+    overscroll-behavior: contain;
 }
 
-.form-group{
-    display:flex;
-    flex-direction:column;
+
+/* Custom scrollbar */
+
+.modal-body::-webkit-scrollbar {
+    width: 7px;
 }
 
-.form-group label{
-    margin-bottom:8px;
-    font-weight:600;
+.modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+}
+
+
+/* =========================
+   FORM GRID
+========================= */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+
+/* =========================
+   FORM GROUP
+========================= */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 8px;
+    font-weight: 600;
 }
 
 .form-group input,
-.form-group select{
-    padding:12px 14px;
-    border:1px solid #CBD5E1;
-    border-radius:10px;
-    font-size:14px;
+.form-group select {
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 12px 14px;
+
+    border: 1px solid #CBD5E1;
+    border-radius: 10px;
+
+    font-size: 14px;
 }
 
 .form-group input:focus,
-.form-group select:focus{
-    outline:none;
-    border-color:#2563EB;
+.form-group select:focus {
+    outline: none;
+    border-color: #2563EB;
 }
 
-.upload-box{
-    margin-top:28px;
-    border:2px dashed #CBD5E1;
-    border-radius:14px;
-    padding:40px;
-    text-align:center;
+
+/* =========================
+   TEXTAREA
+========================= */
+
+.form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+
+    border: 1px solid #CBD5E1;
+    border-radius: 10px;
+
+    font-size: 14px;
+    font-family: inherit;
+
+    resize: vertical;
+
+    box-sizing: border-box;
 }
 
-.upload-box p{
-    margin:16px 0;
-    color:#64748B;
+.form-group textarea:focus {
+    outline: none;
+    border-color: #2563EB;
 }
 
-.secondary-btn{
-    background:#F1F5F9;
-    border:none;
-    padding:12px 20px;
-    border-radius:10px;
-    cursor:pointer;
+
+/* =========================
+   UPLOAD BOX
+========================= */
+
+.upload-box {
+    margin-top: 28px;
+
+    border: 2px dashed #CBD5E1;
+    border-radius: 14px;
+
+    padding: 40px;
+
+    text-align: center;
 }
 
-.modal-footer{
-    display:flex;
-    justify-content:flex-end;
-    gap:16px;
-    padding:20px 28px;
-    border-top:1px solid #E2E8F0;
+.upload-box p {
+    margin: 16px 0;
+    color: #64748B;
 }
 
-@media(max-width:768px){
 
-    .form-grid{
-        grid-template-columns:1fr;
+/* =========================
+   BUTTONS
+========================= */
+
+.secondary-btn {
+    background: #F1F5F9;
+
+    border: none;
+
+    padding: 12px 20px;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+}
+
+
+/* =========================
+   MODAL FOOTER
+========================= */
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+
+    padding: 20px 28px;
+
+    border-top: 1px solid #E2E8F0;
+
+    /*
+       Footer never scrolls away.
+    */
+    flex-shrink: 0;
+
+    background: #fff;
+
+    position: relative;
+
+    z-index: 5;
+}
+
+
+/* =========================
+   CATEGORY MODAL
+========================= */
+
+.category-modal {
+    max-width: 650px;
+}
+
+
+/* =========================
+   STATUS BADGES
+========================= */
+
+.status-badge.paid {
+    background: #DCFCE7;
+    color: #166534;
+}
+
+.status-badge.partial {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.status-badge.pending {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+
+/* =========================
+   PURCHASE MODAL
+========================= */
+
+.purchase-modal {
+    max-width: 1100px;
+}
+
+
+/* =========================
+   PURCHASE ITEMS HEADER
+========================= */
+
+.purchase-items-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-top: 30px;
+    margin-bottom: 16px;
+}
+
+.purchase-items-header h3 {
+    margin: 0;
+}
+
+.purchase-items-header .secondary-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+
+/* =========================
+   PURCHASE ITEMS
+========================= */
+
+.purchase-items {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.purchase-item {
+    display: grid;
+
+    grid-template-columns:
+        2fr
+        1fr
+        1.2fr
+        1.2fr
+        auto;
+
+    gap: 12px;
+
+    align-items: end;
+
+    padding: 18px;
+
+    background: #F8FAFC;
+
+    border: 1px solid #E2E8F0;
+
+    border-radius: 12px;
+}
+
+
+/* =========================
+   PURCHASE ITEM TOTAL
+========================= */
+
+.purchase-item-total {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    padding-bottom: 10px;
+}
+
+.purchase-item-total span {
+    font-size: 12px;
+    color: #64748B;
+}
+
+.purchase-item-total strong {
+    font-size: 14px;
+}
+
+
+/* =========================
+   PURCHASE SUMMARY
+========================= */
+
+.purchase-summary {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+
+    gap: 20px;
+
+    margin: 24px 0;
+
+    padding: 20px;
+
+    background: #F8FAFC;
+
+    border-radius: 12px;
+}
+
+.purchase-summary span {
+    color: #64748B;
+}
+
+.purchase-summary strong {
+    font-size: 22px;
+}
+
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 900px) {
+
+    .purchase-item {
+        grid-template-columns: 1fr 1fr;
     }
 
-    .modal{
-        max-height:90vh;
-        overflow:auto;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 768px) {
+
+    .modal-overlay {
+        padding: 12px;
+        align-items: center;
+    }
+
+    .modal {
+        width: 100%;
+        max-width: 100%;
+        max-height: 92vh;
+
+        border-radius: 14px;
+    }
+
+    .modal-header {
+        padding: 18px 20px;
+    }
+
+    .modal-header h2 {
+        font-size: 20px;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-footer {
+        padding: 16px 20px;
+
+        /*
+           Keep buttons usable on small screens.
+        */
+        flex-wrap: wrap;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .category-modal {
+        max-width: 100%;
     }
 
 }
 
-.form-group textarea{
-    width:100%;
-    padding:12px 14px;
-    border:1px solid #CBD5E1;
-    border-radius:10px;
-    font-size:14px;
-    font-family:inherit;
-    resize:vertical;
-    box-sizing:border-box;
-}
 
-.form-group textarea:focus{
-    outline:none;
-    border-color:#2563EB;
-}
+/* =========================
+   SMALL MOBILE
+========================= */
 
-.category-modal{
-    max-width:650px;
-}
+@media (max-width: 600px) {
 
-.modal-header p{
-    margin:6px 0 0;
-    color:#64748B;
-    font-size:14px;
-}
+    .purchase-item {
+        grid-template-columns: 1fr;
+    }
 
-.status-badge.paid{
-    background:#DCFCE7;
-    color:#166534;
-}
+    .purchase-items-header {
+        align-items: flex-start;
+        gap: 12px;
+        flex-direction: column;
+    }
 
-.status-badge.partial{
-    background:#FEF3C7;
-    color:#92400E;
-}
+    .modal-footer {
+        gap: 10px;
+    }
 
-.status-badge.pending{
-    background:#FEE2E2;
-    color:#991B1B;
-}
-
-.purchase-modal{
-    max-width:1100px;
-}
-
-.purchase-items-header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    margin-top:30px;
-    margin-bottom:16px;
-}
-
-.purchase-items-header h3{
-    margin:0;
-}
-
-.purchase-items-header .secondary-btn{
-    display:flex;
-    align-items:center;
-    gap:7px;
-}
-
-.purchase-items{
-    display:flex;
-    flex-direction:column;
-    gap:14px;
-}
-
-.purchase-item{
-    display:grid;
-    grid-template-columns:2fr 1fr 1.2fr 1.2fr auto;
-    gap:12px;
-    align-items:end;
-    padding:18px;
-    background:#F8FAFC;
-    border:1px solid #E2E8F0;
-    border-radius:12px;
-}
-
-.purchase-item-total{
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    padding-bottom:10px;
-}
-
-.purchase-item-total span{
-    font-size:12px;
-    color:#64748B;
-}
-
-.purchase-item-total strong{
-    font-size:14px;
-}
-
-.purchase-summary{
-    display:flex;
-    justify-content:flex-end;
-    align-items:center;
-    gap:20px;
-    margin:24px 0;
-    padding:20px;
-    background:#F8FAFC;
-    border-radius:12px;
-}
-
-.purchase-summary span{
-    color:#64748B;
-}
-
-.purchase-summary strong{
-    font-size:22px;
-}
-
-@media(max-width:900px){
-
-    .purchase-item{
-        grid-template-columns:1fr 1fr;
+    .modal-footer button {
+        flex: 1;
     }
 
 }
 
-@media(max-width:600px){
 
-    .purchase-item{
-        grid-template-columns:1fr;
+/* =========================
+   VERY SMALL SCREENS
+========================= */
+
+@media (max-height: 700px) {
+
+    .modal {
+        max-height: 94vh;
     }
 
-    .purchase-items-header{
-        align-items:flex-start;
-        gap:12px;
-        flex-direction:column;
+    .modal-header {
+        padding: 16px 22px;
     }
 
+    .modal-body {
+        padding: 20px 22px;
+    }
+
+    .modal-footer {
+        padding: 14px 22px;
+    }
+
+    .form-grid {
+        gap: 14px;
+    }
+
+    .upload-box {
+        padding: 25px;
+    }
+
+}
+
+/* =========================
+   MODAL FORM LAYOUT
+========================= */
+
+/*
+   ProductModal has:
+
+   .modal
+      .modal-header
+      <form>
+          .modal-body
+          .modal-footer
+      </form>
+
+   The form itself must also become
+   a flex container.
+*/
+
+.modal > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+
+/* =========================
+   MODAL BODY
+========================= */
+
+.modal > form .modal-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+
+/* =========================
+   MODAL FOOTER
+========================= */
+
+.modal > form .modal-footer {
+    flex-shrink: 0;
+    background: #fff;
+    position: relative;
+    z-index: 10;
+}
+
+/* =========================
+   PRODUCT MODAL FORM
+========================= */
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+
+    flex: 1;
+    min-height: 0;
+
+    overflow: hidden;
+}
+
+
+/* =========================
+   SCROLLABLE MODAL CONTENT
+========================= */
+
+.modal-form .modal-body {
+    flex: 1;
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding: 28px;
+}
+
+
+/* =========================
+   FIXED MODAL FOOTER
+========================= */
+
+.modal-form .modal-footer {
+    flex-shrink: 0;
+
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+
+    gap: 16px;
+
+    padding: 20px 28px;
+
+    background: #fff;
+
+    border-top: 1px solid #E2E8F0;
+
+    z-index: 20;
 }

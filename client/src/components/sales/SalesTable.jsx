@@ -5,6 +5,27 @@ import {
 
 function SalesTable({ sales, onView }) {
 
+    const getStatusClass = (status) => {
+
+        switch (status) {
+
+            case "Completed":
+                return "status-badge completed";
+
+            case "Pending":
+                return "status-badge pending";
+
+            case "Failed":
+                return "status-badge cancelled";
+
+            case "Cancelled":
+                return "status-badge cancelled";
+
+            default:
+                return "status-badge pending";
+        }
+    };
+
     return (
         <div className="sales-table-container">
 
@@ -64,7 +85,9 @@ function SalesTable({ sales, onView }) {
 
                             <td>
                                 <span
-                                    className={`payment-badge ${sale.paymentMethod
+                                    className={`payment-badge ${String(
+                                        sale.paymentMethod
+                                    )
                                         .toLowerCase()
                                         .replace("-", "")}`}
                                 >
@@ -74,24 +97,21 @@ function SalesTable({ sales, onView }) {
 
                             <td>
                                 <strong>
-                                    KSh {sale.total.toLocaleString()}
+                                    KSh{" "}
+                                    {Number(
+                                        sale.total || 0
+                                    ).toLocaleString()}
                                 </strong>
                             </td>
 
                             <td>
-
                                 <span
-                                    className={
-                                        sale.status === "Completed"
-                                            ? "status-badge completed"
-                                            : sale.status === "Pending"
-                                                ? "status-badge pending"
-                                                : "status-badge cancelled"
-                                    }
+                                    className={getStatusClass(
+                                        sale.status
+                                    )}
                                 >
                                     {sale.status}
                                 </span>
-
                             </td>
 
                             <td>
@@ -124,11 +144,9 @@ function SalesTable({ sales, onView }) {
             </table>
 
             {sales.length === 0 && (
-
                 <div className="sales-empty">
                     No sales found.
                 </div>
-
             )}
 
         </div>
