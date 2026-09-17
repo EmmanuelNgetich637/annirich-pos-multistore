@@ -13,6 +13,7 @@ const getDashboardSummary = async (storeId) => {
         SELECT COUNT(*) AS totalProducts
         FROM products
         WHERE store_id = ?
+        AND status = 'active'
         `,
         [storeId]
     );
@@ -22,6 +23,7 @@ const getDashboardSummary = async (storeId) => {
         SELECT COUNT(*) AS totalCategories
         FROM categories
         WHERE store_id = ?
+        AND status = 'active'
         `,
         [storeId]
     );
@@ -31,6 +33,7 @@ const getDashboardSummary = async (storeId) => {
         SELECT COUNT(*) AS totalCustomers
         FROM customers
         WHERE store_id = ?
+        AND status = 'active'
         `,
         [storeId]
     );
@@ -40,6 +43,7 @@ const getDashboardSummary = async (storeId) => {
         SELECT COUNT(*) AS totalSuppliers
         FROM suppliers
         WHERE store_id = ?
+        AND status = 'active'
         `,
         [storeId]
     );
@@ -51,6 +55,7 @@ const getDashboardSummary = async (storeId) => {
             IFNULL(SUM(total), 0) AS salesRevenue
         FROM sales
         WHERE store_id = ?
+        AND payment_status = 'paid'
         `,
         [storeId]
     );
@@ -62,6 +67,7 @@ const getDashboardSummary = async (storeId) => {
             IFNULL(SUM(total_amount), 0) AS purchaseCost
         FROM purchases
         WHERE store_id = ?
+        AND status = 'Completed'
         `,
         [storeId]
     );
@@ -82,6 +88,8 @@ const getDashboardSummary = async (storeId) => {
         SELECT COUNT(*) AS lowStockItems
         FROM products
         WHERE store_id = ?
+        AND status = 'active'
+        AND minimum_stock IS NOT NULL
         AND quantity <= minimum_stock
         `,
         [storeId]
@@ -129,12 +137,14 @@ const getRecentSales = async (storeId) => {
             c.name AS customer_name,
             s.total,
             s.payment_method,
+            s.payment_status,
             s.created_at
         FROM sales s
         LEFT JOIN customers c
             ON s.customer_id = c.id
             AND c.store_id = s.store_id
         WHERE s.store_id = ?
+        AND s.payment_status = 'paid'
         ORDER BY s.created_at DESC
         LIMIT 10
         `,
@@ -161,12 +171,14 @@ const getRecentPurchases = async (storeId) => {
             s.name AS supplier_name,
             p.invoice_number,
             p.total_amount,
+            p.status,
             p.created_at
         FROM purchases p
         LEFT JOIN suppliers s
             ON p.supplier_id = s.id
             AND s.store_id = p.store_id
         WHERE p.store_id = ?
+        AND p.status = 'Completed'
         ORDER BY p.created_at DESC
         LIMIT 10
         `,
@@ -195,6 +207,8 @@ const getLowStockProducts = async (storeId) => {
             minimum_stock
         FROM products
         WHERE store_id = ?
+        AND status = 'active'
+        AND minimum_stock IS NOT NULL
         AND quantity <= minimum_stock
         ORDER BY quantity ASC
         `,
@@ -221,6 +235,7 @@ const getMonthlySales = async (storeId) => {
             IFNULL(SUM(total), 0) AS revenue
         FROM sales
         WHERE store_id = ?
+        AND payment_status = 'paid'
         GROUP BY DATE_FORMAT(created_at, '%Y-%m')
         ORDER BY month ASC
         `,

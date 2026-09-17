@@ -7,18 +7,12 @@ import {
     Tooltip
 } from "recharts";
 
-const data = [
+function SalesChart({ data = [] }) {
 
-    { month: "Jan", sales: 35 },
-    { month: "Feb", sales: 52 },
-    { month: "Mar", sales: 44 },
-    { month: "Apr", sales: 70 },
-    { month: "May", sales: 88 },
-    { month: "Jun", sales: 102 }
-
-];
-
-function SalesChart() {
+    const chartData = data.map((item) => ({
+        month: item.month,
+        sales: Number(item.totalSales || 0)
+    }));
 
     return (
 
@@ -31,9 +25,11 @@ function SalesChart() {
                 height={320}
             >
 
-                <BarChart data={data}>
+                <BarChart data={chartData}>
 
-                    <XAxis dataKey="month" />
+                    <XAxis
+                        dataKey="month"
+                    />
 
                     <YAxis />
 

@@ -34,8 +34,7 @@ function Dashboard() {
                 setLoading(true);
                 setError("");
 
-                const response =
-                    await getDashboard();
+                const response = await getDashboard();
 
                 if (response.success) {
                     setDashboard(response.data);
@@ -86,15 +85,14 @@ function Dashboard() {
         );
     }
 
-    const summary =
-        dashboard?.summary || {};
+    const summary = dashboard?.summary || {};
 
     const stats = [
 
         {
             title: "Revenue",
             value: `KES ${Number(
-                summary.revenue || 0
+                summary.salesRevenue || 0
             ).toLocaleString()}`,
             icon: <FiDollarSign />,
             color: "#2563EB"
@@ -103,7 +101,7 @@ function Dashboard() {
         {
             title: "Sales",
             value: Number(
-                summary.sales || 0
+                summary.totalSales || 0
             ).toLocaleString(),
             icon: <FiShoppingCart />,
             color: "#16A34A"
@@ -112,7 +110,7 @@ function Dashboard() {
         {
             title: "Products",
             value: Number(
-                summary.products || 0
+                summary.totalProducts || 0
             ).toLocaleString(),
             icon: <FiPackage />,
             color: "#F59E0B"
@@ -121,7 +119,7 @@ function Dashboard() {
         {
             title: "Customers",
             value: Number(
-                summary.customers || 0
+                summary.totalCustomers || 0
             ).toLocaleString(),
             icon: <FiUsers />,
             color: "#8B5CF6"
@@ -130,44 +128,45 @@ function Dashboard() {
     ];
 
     return (
-
         <>
-
             <DashboardHeader />
 
             <section className="stats-grid">
 
                 {stats.map((item) => (
-
                     <StatCard
                         key={item.title}
                         {...item}
                     />
-
                 ))}
 
             </section>
 
             <section className="chart-grid">
 
-                <RevenueChart />
+                <RevenueChart
+                    data={dashboard?.monthlySales || []}
+                />
 
-                <SalesChart />
+                <SalesChart
+                    data={dashboard?.monthlySales || []}
+                />
 
             </section>
 
             <section className="table-grid">
 
-                <RecentSales />
+                <RecentSales
+                    sales={dashboard?.recentSales || []}
+                />
 
-                <LowStockTable />
+                <LowStockTable
+                    products={dashboard?.lowStockProducts || []}
+                />
 
             </section>
-
         </>
-
     );
-
 }
 
 export default Dashboard;

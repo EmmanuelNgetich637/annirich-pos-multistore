@@ -8,18 +8,12 @@ import {
     YAxis
 } from "recharts";
 
-const data = [
+function RevenueChart({ data = [] }) {
 
-    { month: "Jan", revenue: 180000 },
-    { month: "Feb", revenue: 220000 },
-    { month: "Mar", revenue: 195000 },
-    { month: "Apr", revenue: 265000 },
-    { month: "May", revenue: 300000 },
-    { month: "Jun", revenue: 345000 }
-
-];
-
-function RevenueChart() {
+    const chartData = data.map((item) => ({
+        month: item.month,
+        revenue: Number(item.revenue || 0)
+    }));
 
     return (
 
@@ -32,17 +26,26 @@ function RevenueChart() {
                 height={320}
             >
 
-                <AreaChart data={data}>
+                <AreaChart data={chartData}>
 
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid
+                        strokeDasharray="3 3"
+                    />
 
-                    <XAxis dataKey="month" />
+                    <XAxis
+                        dataKey="month"
+                    />
 
                     <YAxis />
 
-                    <Tooltip />
+                    <Tooltip
+                        formatter={(value) =>
+                            `KES ${Number(value).toLocaleString()}`
+                        }
+                    />
 
                     <Area
+                        type="monotone"
                         dataKey="revenue"
                         stroke="#2563EB"
                         fill="#93C5FD"
