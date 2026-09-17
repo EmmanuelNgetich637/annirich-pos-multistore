@@ -1,53 +1,75 @@
 const authService = require("../services/authService");
+const db = require("../config/db");
 
 // Register User
 const register = async (req, res) => {
-  try {
-    const id = await authService.register(req.body);
+    try {
+        const id = await authService.register(req.body);
 
-    res.status(201).json({
-      success: true,
-      message: "User created successfully",
-      userId: id,
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-  }
+        res.status(201).json({
+            success: true,
+            message: "User created successfully",
+            userId: id
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
 };
 
 // Login User
 const login = async (req, res) => {
-  try {
-    const {
-      storeCode,
-      username,
-      password
-    } = req.body;
+    try {
+        const {
+            storeCode,
+            username,
+            password
+        } = req.body;
 
-    const result = await authService.login(
-      storeCode,
-      username,
-      password
-    );
+        const result = await authService.login(
+            storeCode,
+            username,
+            password
+        );
 
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      token: result.token,
-      user: result.user,
-    });
-  } catch (error) {
-    res.status(401).json({
-      success: false,
-      message: error.message,
-    });
-  }
+        res.status(200).json({
+            success: true,
+            message: "Login successful",
+            token: result.token,
+            user: result.user
+        });
+    } catch (error) {
+        res.status(401).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// Get currently authenticated user
+const me = async (req, res) => {
+    try {
+        const user = await authService.getCurrentUser(
+            req.user.id,
+            req.storeId
+        );
+
+        res.status(200).json({
+            success: true,
+            user
+        });
+    } catch (error) {
+        res.status(401).json({
+            success: false,
+            message: error.message
+        });
+    }
 };
 
 module.exports = {
-  register,
-  login,
+    register,
+    login,
+    me
 };

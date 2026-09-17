@@ -89,8 +89,39 @@ const getSaleById = async (id, storeId) => {
 };
 
 
+// UPDATE PAYMENT STATUS
+const updatePaymentStatus = async (
+    saleId,
+    storeId,
+    paymentStatus
+) => {
+
+    const [result] = await db.query(
+        `
+        UPDATE sales
+
+        SET payment_status = ?
+
+        WHERE id = ?
+        AND store_id = ?
+        `,
+        [
+            paymentStatus,
+            saleId,
+            storeId
+        ]
+    );
+
+    return result.affectedRows > 0;
+
+};
+
+
 // SEARCH SALES
-const searchSales = async (keyword, storeId) => {
+const searchSales = async (
+    keyword,
+    storeId
+) => {
 
     const search = `%${keyword}%`;
 
@@ -199,46 +230,66 @@ const getSalesPaginated = async (
 
 
 // STATISTICS
-const getSaleStatistics = async (storeId) => {
+// STATISTICS
+const getSaleStatistics = async (
+    storeId
+) => {
 
     const [[stats]] = await db.query(
         `
         SELECT
 
-            COUNT(*) AS totalSales,
+            COUNT(DISTINCT s.id) AS totalSales,
 
             COALESCE(
-                SUM(subtotal),
+                SUM(s.subtotal),
                 0
             ) AS totalSubtotal,
 
             COALESCE(
-                SUM(discount),
+                SUM(s.discount),
                 0
             ) AS totalDiscount,
 
             COALESCE(
-                SUM(total),
+                SUM(s.total),
                 0
-            ) AS totalAmount
+            ) AS totalAmount,
 
-        FROM sales
+            COALESCE(
+                (
+                    SELECT SUM(si.quantity)
+                    FROM sale_items si
+                    INNER JOIN sales s2
+                        ON si.sale_id = s2.id
+                    WHERE s2.store_id = ?
+                    AND si.store_id = ?
+                ),
+                0
+            ) AS totalItems
 
-        WHERE store_id = ?
+        FROM sales s
+
+        WHERE s.store_id = ?
         `,
-        [storeId]
+        [
+            storeId,
+            storeId,
+            storeId
+        ]
     );
 
     return stats;
 
-};
-
+}; 
 
 module.exports = {
 
     getAllSales,
 
     getSaleById,
+
+    updatePaymentStatus,
 
     searchSales,
 

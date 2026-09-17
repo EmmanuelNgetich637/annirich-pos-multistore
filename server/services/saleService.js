@@ -10,15 +10,14 @@ const createSale = async (
     storeId
 ) => {
 
-    const connection =
-        await db.getConnection();
-
+    const connection = await db.getConnection();
 
     try {
 
         await connection.beginTransaction();
 
 
+        // Validate sale items
         if (
             !data.items ||
             !Array.isArray(data.items) ||
@@ -30,6 +29,7 @@ const createSale = async (
         }
 
 
+        // Validate payment method
         if (!data.payment_method) {
             throw new Error(
                 "Payment method is required."
@@ -72,11 +72,9 @@ const createSale = async (
         for (const item of data.items) {
 
             if (!item.product_id) {
-
                 throw new Error(
                     "Product ID is required."
                 );
-
             }
 
 
@@ -84,11 +82,9 @@ const createSale = async (
                 !item.quantity ||
                 item.quantity <= 0
             ) {
-
                 throw new Error(
                     "Invalid quantity."
                 );
-
             }
 
 
@@ -97,11 +93,9 @@ const createSale = async (
                 item.selling_price === null ||
                 item.selling_price < 0
             ) {
-
                 throw new Error(
                     "Invalid selling price."
                 );
-
             }
 
 
@@ -113,11 +107,9 @@ const createSale = async (
                         name,
                         quantity
                     FROM products
-
                     WHERE id = ?
                     AND store_id = ?
                     AND status = 'active'
-
                     LIMIT 1
                     `,
                     [
@@ -128,27 +120,22 @@ const createSale = async (
 
 
             if (!products[0]) {
-
                 throw new Error(
                     `Product ${item.product_id} not found in this store.`
                 );
-
             }
 
 
-            const product =
-                products[0];
+            const product = products[0];
 
 
             if (
                 product.quantity <
                 item.quantity
             ) {
-
                 throw new Error(
                     `Insufficient stock for ${product.name}.`
                 );
-
             }
 
 
@@ -159,30 +146,41 @@ const createSale = async (
         }
 
 
+        // Calculate discount
         const discount =
             Number(data.discount || 0);
 
 
         if (discount < 0) {
-
             throw new Error(
                 "Invalid discount."
             );
-
         }
 
 
         if (discount > subtotal) {
-
             throw new Error(
                 "Discount cannot exceed subtotal."
             );
-
         }
 
 
+        // Calculate total
         const total =
             subtotal - discount;
+
+
+        // Determine payment status
+        //
+        // M-Pesa starts as pending because
+        // Safaricom must confirm the payment.
+        //
+        // Cash and Card are currently
+        // treated as paid.
+        const paymentStatus =
+            data.payment_method === "Mpesa"
+                ? "pending"
+                : "paid";
 
 
         // Create sale
@@ -195,18 +193,19 @@ const createSale = async (
                     customer_id,
                     cashier_id,
                     payment_method,
+                    payment_status,
                     subtotal,
                     discount,
                     total
                 )
-
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 `,
                 [
                     storeId,
                     data.customer_id || null,
                     userId,
                     data.payment_method,
+                    paymentStatus,
                     subtotal,
                     discount,
                     total
@@ -222,6 +221,7 @@ const createSale = async (
         for (const item of data.items) {
 
 
+            // Insert sale item
             await connection.query(
                 `
                 INSERT INTO sale_items
@@ -232,7 +232,6 @@ const createSale = async (
                     quantity,
                     selling_price
                 )
-
                 VALUES (?, ?, ?, ?, ?)
                 `,
                 [
@@ -245,16 +244,15 @@ const createSale = async (
             );
 
 
-            // Lock product row before changing stock
+            // Lock product row before
+            // changing stock
             const [products] =
                 await connection.query(
                     `
                     SELECT quantity
                     FROM products
-
                     WHERE id = ?
                     AND store_id = ?
-
                     FOR UPDATE
                     `,
                     [
@@ -265,25 +263,22 @@ const createSale = async (
 
 
             if (!products[0]) {
-
                 throw new Error(
                     "Product not found."
                 );
-
             }
 
 
+            // Calculate new stock balance
             const newBalance =
                 products[0].quantity -
                 item.quantity;
 
 
             if (newBalance < 0) {
-
                 throw new Error(
                     "Insufficient stock."
                 );
-
             }
 
 
@@ -291,9 +286,7 @@ const createSale = async (
             await connection.query(
                 `
                 UPDATE products
-
                 SET quantity = ?
-
                 WHERE id = ?
                 AND store_id = ?
                 `,
@@ -305,7 +298,7 @@ const createSale = async (
             );
 
 
-            // Stock movement
+            // Record stock movement
             await connection.query(
                 `
                 INSERT INTO stock_movements
@@ -319,7 +312,6 @@ const createSale = async (
                     balance_after,
                     remarks
                 )
-
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 `,
                 [
@@ -337,30 +329,30 @@ const createSale = async (
         }
 
 
+        // Commit transaction
         await connection.commit();
 
 
+        // Return created sale
         return {
-
             saleId,
-
             subtotal,
-
             discount,
-
-            total
-
+            total,
+            paymentStatus
         };
 
 
     } catch (error) {
 
+        // Rollback if anything fails
         await connection.rollback();
 
         throw error;
 
     } finally {
 
+        // Release database connection
         connection.release();
 
     }
@@ -369,7 +361,9 @@ const createSale = async (
 
 
 // GET ALL SALES
-const getSales = async (storeId) => {
+const getSales = async (
+    storeId
+) => {
 
     return await Sale.getAllSales(
         storeId
@@ -392,11 +386,9 @@ const getSale = async (
 
 
     if (!sale) {
-
         throw new Error(
             "Sale not found."
         );
-
     }
 
 
@@ -461,4 +453,4 @@ module.exports = {
 
     getSaleStatistics
 
-};
+}; 

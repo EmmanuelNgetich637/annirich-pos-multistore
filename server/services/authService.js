@@ -117,7 +117,57 @@ const login = async (storeCode, username, password) => {
   };
 };
 
+// Get currently authenticated user
+const getCurrentUser = async (userId, storeId) => {
+    const [rows] = await db.query(
+        `SELECT
+            u.id,
+            u.full_name,
+            u.username,
+            u.email,
+            u.role,
+            u.status,
+            u.store_id,
+            s.code AS store_code,
+            s.name AS store_name,
+            s.status AS store_status
+         FROM users u
+         INNER JOIN stores s
+             ON u.store_id = s.id
+         WHERE u.id = ?
+         AND u.store_id = ?
+         LIMIT 1`,
+        [userId, storeId]
+    );
+
+    const user = rows[0];
+
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    if (user.status !== "active") {
+        throw new Error("User account is inactive");
+    }
+
+    if (user.store_status !== "active") {
+        throw new Error("This store is inactive");
+    }
+
+    return {
+        id: user.id,
+        full_name: user.full_name,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        storeId: user.store_id,
+        storeCode: user.store_code,
+        storeName: user.store_name
+    };
+};
+
 module.exports = {
   register,
   login,
-};
+  getCurrentUser,
+}; 
