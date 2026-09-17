@@ -1,44 +1,44 @@
 import {
-    FiEye,
-    FiEdit2,
-    FiTrash2
+    FiEye
 } from "react-icons/fi";
 
 import StatusBadge from "../common/StatusBadge";
 
-function PurchaseRow({ purchase }) {
+function PurchaseRow({ purchase, onView }) {
+
+    const total = Number(
+        purchase.total_amount || 0
+    );
+
+    const date = purchase.purchase_date
+        ? new Date(
+            purchase.purchase_date
+        ).toLocaleDateString()
+        : "—";
 
     return (
         <tr>
 
             <td>
                 <strong>
-                    {purchase.reference}
+                    {purchase.invoice_number || `PUR-${purchase.id}`}
                 </strong>
             </td>
 
             <td>
-                {purchase.supplier}
+                {purchase.supplier_name || "—"}
             </td>
 
             <td>
-                {purchase.date}
+                {date}
             </td>
 
             <td>
-                {purchase.items}
+                {purchase.items_count ?? "—"}
             </td>
 
             <td>
-                KSh {purchase.total.toLocaleString()}
-            </td>
-
-            <td>
-                KSh {purchase.paid.toLocaleString()}
-            </td>
-
-            <td>
-                KSh {purchase.balance.toLocaleString()}
+                KSh {total.toLocaleString()}
             </td>
 
             <td>
@@ -51,16 +51,12 @@ function PurchaseRow({ purchase }) {
 
                 <div className="table-actions">
 
-                    <button className="icon-btn">
+                    <button
+                        className="icon-btn"
+                        title="View purchase"
+                        onClick={() => onView?.(purchase)}
+                    >
                         <FiEye />
-                    </button>
-
-                    <button className="icon-btn">
-                        <FiEdit2 />
-                    </button>
-
-                    <button className="icon-btn danger">
-                        <FiTrash2 />
                     </button>
 
                 </div>

@@ -402,11 +402,6 @@ module.exports = {
     getPurchases,
 
     getPurchase,
-
-    updatePurchase,
-
-    deletePurchase,
-
     searchPurchases,
 
     getPurchasesPaginated,

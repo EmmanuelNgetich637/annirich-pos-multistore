@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
     FiX,
@@ -6,28 +6,132 @@ import {
     FiTrash2
 } from "react-icons/fi";
 
-function PurchaseModal({ open, onClose }) {
+import {
+    getSuppliers
+} from "../../api/supplierApi";
+
+import {
+    getProducts
+} from "../../api/productApi";
+
+import {
+    createPurchase
+} from "../../api/purchaseApi";
+
+function PurchaseModal({
+    open,
+    onClose,
+    onSaved
+}) {
+
+    const [suppliers, setSuppliers] = useState([]);
+    const [products, setProducts] = useState([]);
+
+    const [supplierId, setSupplierId] = useState("");
+    const [invoiceNumber, setInvoiceNumber] = useState("");
+    const [remarks, setRemarks] = useState("");
 
     const [items, setItems] = useState([
         {
-            id: 1,
-            product: "",
+            id: Date.now(),
+            productId: "",
             quantity: 1,
             price: 0
         }
     ]);
 
-    if (!open) {
-        return null;
-    }
+    const [loadingData, setLoadingData] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+
+        if (!open) {
+            return;
+        }
+
+        const loadFormData = async () => {
+
+            try {
+
+                setLoadingData(true);
+                setError("");
+
+                const [
+                    suppliersResponse,
+                    productsResponse
+                ] = await Promise.all([
+                    getSuppliers(),
+                    getProducts()
+                ]);
+
+                setSuppliers(
+                    suppliersResponse?.data || []
+                );
+
+                setProducts(
+                    productsResponse?.data || []
+                );
+
+            } catch (err) {
+
+                console.error(
+                    "Failed to load purchase form data:",
+                    err.response?.data || err
+                );
+
+                setError(
+                    err.response?.data?.message ||
+                    "Failed to load suppliers and products."
+                );
+
+            } finally {
+
+                setLoadingData(false);
+
+            }
+        };
+
+        loadFormData();
+
+    }, [open]);
+
+    const resetForm = () => {
+
+        setSupplierId("");
+        setInvoiceNumber("");
+        setRemarks("");
+
+        setItems([
+            {
+                id: Date.now(),
+                productId: "",
+                quantity: 1,
+                price: 0
+            }
+        ]);
+
+        setError("");
+    };
+
+    const handleClose = () => {
+
+        if (saving) {
+            return;
+        }
+
+        resetForm();
+        onClose();
+
+    };
 
     const addItem = () => {
 
-        setItems([
-            ...items,
+        setItems((currentItems) => [
+            ...currentItems,
             {
                 id: Date.now(),
-                product: "",
+                productId: "",
                 quantity: 1,
                 price: 0
             }
@@ -41,11 +145,12 @@ function PurchaseModal({ open, onClose }) {
             return;
         }
 
-        setItems(
-            items.filter(
+        setItems((currentItems) =>
+            currentItems.filter(
                 (item) => item.id !== id
             )
         );
+
     };
 
     const updateItem = (
@@ -54,8 +159,8 @@ function PurchaseModal({ open, onClose }) {
         value
     ) => {
 
-        setItems(
-            items.map((item) =>
+        setItems((currentItems) =>
+            currentItems.map((item) =>
                 item.id === id
                     ? {
                         ...item,
@@ -64,6 +169,35 @@ function PurchaseModal({ open, onClose }) {
                     : item
             )
         );
+
+    };
+
+    const handleProductChange = (
+        id,
+        productId
+    ) => {
+
+        const selectedProduct = products.find(
+            (product) =>
+                String(product.id) ===
+                String(productId)
+        );
+
+        setItems((currentItems) =>
+            currentItems.map((item) =>
+                item.id === id
+                    ? {
+                        ...item,
+                        productId,
+                        price:
+                            selectedProduct?.buying_price ??
+                            selectedProduct?.buyingPrice ??
+                            0
+                    }
+                    : item
+            )
+        );
+
     };
 
     const total = items.reduce(
@@ -73,6 +207,115 @@ function PurchaseModal({ open, onClose }) {
             Number(item.price || 0),
         0
     );
+
+    const handleSubmit = async (e) => {
+
+        e.preventDefault();
+
+        setError("");
+
+        if (!supplierId) {
+
+            setError(
+                "Please select a supplier."
+            );
+
+            return;
+        }
+
+        const invalidItem =
+            items.some(
+                (item) =>
+                    !item.productId ||
+                    Number(item.quantity) <= 0 ||
+                    Number(item.price) < 0
+            );
+
+        if (invalidItem) {
+
+            setError(
+                "Please complete all purchase items correctly."
+            );
+
+            return;
+        }
+
+        try {
+
+            setSaving(true);
+
+            const purchaseData = {
+                supplier_id: Number(supplierId),
+
+                invoice_number:
+                    invoiceNumber.trim() || null,
+
+                remarks:
+                    remarks.trim() || null,
+
+                items: items.map((item) => ({
+                    product_id: Number(item.productId),
+                    quantity: Number(item.quantity),
+                    buying_price: Number(item.price)
+                }))
+            };
+
+            console.log(
+                "Creating purchase:",
+                purchaseData
+            );
+
+            await createPurchase(
+                purchaseData
+            );
+
+            resetForm();
+
+            if (onSaved) {
+                await onSaved();
+            }
+
+        } catch (err) {
+
+            console.error(
+                "Failed to create purchase:",
+                err.response?.data || err
+            );
+
+            const validationErrors =
+                err.response?.data?.errors;
+
+            if (
+                Array.isArray(validationErrors) &&
+                validationErrors.length > 0
+            ) {
+
+                setError(
+                    validationErrors
+                        .map((item) => item.msg)
+                        .join(" ")
+                );
+
+            } else {
+
+                setError(
+                    err.response?.data?.message ||
+                    "Failed to create purchase."
+                );
+
+            }
+
+        } finally {
+
+            setSaving(false);
+
+        }
+
+    };
+
+    if (!open) {
+        return null;
+    }
 
     return (
         <div className="modal-overlay">
@@ -95,269 +338,313 @@ function PurchaseModal({ open, onClose }) {
 
                     <button
                         className="close-btn"
-                        onClick={onClose}
+                        onClick={handleClose}
+                        disabled={saving}
                     >
                         <FiX />
                     </button>
 
                 </div>
 
-                <div className="modal-body">
+                <form onSubmit={handleSubmit}>
 
-                    <div className="form-grid">
+                    <div className="modal-body">
 
-                        <div className="form-group">
+                        {error && (
+                            <div className="form-error">
+                                {error}
+                            </div>
+                        )}
 
-                            <label>
-                                Supplier
-                            </label>
+                        {loadingData ? (
 
-                            <select>
+                            <div className="empty-state">
+                                Loading suppliers and products...
+                            </div>
 
-                                <option>
-                                    Select Supplier
-                                </option>
+                        ) : (
 
-                                <option>
-                                    Crown Paints Kenya
-                                </option>
+                            <>
 
-                                <option>
-                                    Bamburi Cement
-                                </option>
+                                <div className="form-grid">
 
-                                <option>
-                                    Davis & Shirtliff
-                                </option>
+                                    <div className="form-group">
 
-                                <option>
-                                    Kenya Pipe Manufacturers
-                                </option>
+                                        <label>
+                                            Supplier
+                                        </label>
 
-                            </select>
+                                        <select
+                                            value={supplierId}
+                                            onChange={(e) =>
+                                                setSupplierId(
+                                                    e.target.value
+                                                )
+                                            }
+                                            disabled={saving}
+                                        >
 
-                        </div>
+                                            <option value="">
+                                                Select Supplier
+                                            </option>
 
-                        <div className="form-group">
+                                            {suppliers.map(
+                                                (supplier) => (
 
-                            <label>
-                                Purchase Date
-                            </label>
+                                                    <option
+                                                        key={supplier.id}
+                                                        value={supplier.id}
+                                                    >
+                                                        {supplier.name}
+                                                    </option>
 
-                            <input
-                                type="date"
-                                defaultValue="2026-08-07"
-                            />
+                                                )
+                                            )}
 
-                        </div>
+                                        </select>
 
-                    </div>
+                                    </div>
 
-                    <div className="purchase-items-header">
+                                    <div className="form-group">
 
-                        <h3>
-                            Purchase Items
-                        </h3>
+                                        <label>
+                                            Invoice Number
+                                        </label>
 
-                        <button
-                            className="secondary-btn"
-                            onClick={addItem}
-                        >
-                            <FiPlus />
-                            Add Item
-                        </button>
+                                        <input
+                                            type="text"
+                                            value={invoiceNumber}
+                                            onChange={(e) =>
+                                                setInvoiceNumber(
+                                                    e.target.value
+                                                )
+                                            }
+                                            placeholder="e.g. INV-2003"
+                                            disabled={saving}
+                                        />
 
-                    </div>
+                                    </div>
 
-                    <div className="purchase-items">
+                                </div>
 
-                        {items.map((item) => (
+                                <div className="purchase-items-header">
 
-                            <div
-                                className="purchase-item"
-                                key={item.id}
-                            >
+                                    <h3>
+                                        Purchase Items
+                                    </h3>
 
-                                <div className="form-group">
-
-                                    <label>
-                                        Product
-                                    </label>
-
-                                    <select
-                                        value={item.product}
-                                        onChange={(e) =>
-                                            updateItem(
-                                                item.id,
-                                                "product",
-                                                e.target.value
-                                            )
-                                        }
+                                    <button
+                                        type="button"
+                                        className="secondary-btn"
+                                        onClick={addItem}
+                                        disabled={saving}
                                     >
-
-                                        <option value="">
-                                            Select Product
-                                        </option>
-
-                                        <option>
-                                            Crown Paint Premium 4L
-                                        </option>
-
-                                        <option>
-                                            PVC Pipe 2 Inch
-                                        </option>
-
-                                        <option>
-                                            Cement 50kg
-                                        </option>
-
-                                    </select>
+                                        <FiPlus />
+                                        Add Item
+                                    </button>
 
                                 </div>
 
-                                <div className="form-group">
+                                <div className="purchase-items">
 
-                                    <label>
-                                        Quantity
-                                    </label>
+                                    {items.map((item) => (
 
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        value={item.quantity}
-                                        onChange={(e) =>
-                                            updateItem(
-                                                item.id,
-                                                "quantity",
-                                                e.target.value
-                                            )
-                                        }
-                                    />
+                                        <div
+                                            className="purchase-item"
+                                            key={item.id}
+                                        >
+
+                                            <div className="form-group">
+
+                                                <label>
+                                                    Product
+                                                </label>
+
+                                                <select
+                                                    value={item.productId}
+                                                    onChange={(e) =>
+                                                        handleProductChange(
+                                                            item.id,
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                    disabled={saving}
+                                                >
+
+                                                    <option value="">
+                                                        Select Product
+                                                    </option>
+
+                                                    {products.map(
+                                                        (product) => (
+
+                                                            <option
+                                                                key={product.id}
+                                                                value={product.id}
+                                                            >
+                                                                {product.name}
+                                                            </option>
+
+                                                        )
+                                                    )}
+
+                                                </select>
+
+                                            </div>
+
+                                            <div className="form-group">
+
+                                                <label>
+                                                    Quantity
+                                                </label>
+
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={item.quantity}
+                                                    onChange={(e) =>
+                                                        updateItem(
+                                                            item.id,
+                                                            "quantity",
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                    disabled={saving}
+                                                />
+
+                                            </div>
+
+                                            <div className="form-group">
+
+                                                <label>
+                                                    Buying Price
+                                                </label>
+
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    value={item.price}
+                                                    onChange={(e) =>
+                                                        updateItem(
+                                                            item.id,
+                                                            "price",
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                    disabled={saving}
+                                                />
+
+                                            </div>
+
+                                            <div className="purchase-item-total">
+
+                                                <span>
+                                                    Total
+                                                </span>
+
+                                                <strong>
+                                                    KSh{" "}
+                                                    {(
+                                                        Number(
+                                                            item.quantity || 0
+                                                        ) *
+                                                        Number(
+                                                            item.price || 0
+                                                        )
+                                                    ).toLocaleString()}
+                                                </strong>
+
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                className="icon-btn danger"
+                                                onClick={() =>
+                                                    removeItem(
+                                                        item.id
+                                                    )
+                                                }
+                                                disabled={
+                                                    saving ||
+                                                    items.length === 1
+                                                }
+                                            >
+                                                <FiTrash2 />
+                                            </button>
+
+                                        </div>
+
+                                    ))}
 
                                 </div>
 
-                                <div className="form-group">
-
-                                    <label>
-                                        Buying Price
-                                    </label>
-
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={item.price}
-                                        onChange={(e) =>
-                                            updateItem(
-                                                item.id,
-                                                "price",
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-
-                                </div>
-
-                                <div className="purchase-item-total">
+                                <div className="purchase-summary">
 
                                     <span>
-                                        Total
+                                        Grand Total
                                     </span>
 
                                     <strong>
                                         KSh{" "}
-                                        {(
-                                            Number(item.quantity || 0) *
-                                            Number(item.price || 0)
-                                        ).toLocaleString()}
+                                        {total.toLocaleString()}
                                     </strong>
 
                                 </div>
 
-                                <button
-                                    className="icon-btn danger"
-                                    onClick={() =>
-                                        removeItem(item.id)
-                                    }
-                                >
-                                    <FiTrash2 />
-                                </button>
+                                <div className="form-group">
 
-                            </div>
+                                    <label>
+                                        Remarks
+                                    </label>
 
-                        ))}
+                                    <textarea
+                                        value={remarks}
+                                        onChange={(e) =>
+                                            setRemarks(
+                                                e.target.value
+                                            )
+                                        }
+                                        placeholder="Optional purchase remarks"
+                                        rows="3"
+                                        disabled={saving}
+                                    />
 
-                    </div>
+                                </div>
 
-                    <div className="purchase-summary">
+                            </>
 
-                        <span>
-                            Grand Total
-                        </span>
-
-                        <strong>
-                            KSh {total.toLocaleString()}
-                        </strong>
-
-                    </div>
-
-                    <div className="form-grid">
-
-                        <div className="form-group">
-
-                            <label>
-                                Payment Status
-                            </label>
-
-                            <select>
-
-                                <option>
-                                    Paid
-                                </option>
-
-                                <option>
-                                    Partial
-                                </option>
-
-                                <option>
-                                    Pending
-                                </option>
-
-                            </select>
-
-                        </div>
-
-                        <div className="form-group">
-
-                            <label>
-                                Amount Paid
-                            </label>
-
-                            <input
-                                type="number"
-                                min="0"
-                                placeholder="0"
-                            />
-
-                        </div>
+                        )}
 
                     </div>
 
-                </div>
+                    <div className="modal-footer">
 
-                <div className="modal-footer">
+                        <button
+                            type="button"
+                            className="secondary-btn"
+                            onClick={handleClose}
+                            disabled={saving}
+                        >
+                            Cancel
+                        </button>
 
-                    <button
-                        className="secondary-btn"
-                        onClick={onClose}
-                    >
-                        Cancel
-                    </button>
+                        <button
+                            type="submit"
+                            className="primary-btn"
+                            disabled={
+                                saving ||
+                                loadingData
+                            }
+                        >
+                            {saving
+                                ? "Saving..."
+                                : "Save Purchase"}
+                        </button>
 
-                    <button className="primary-btn">
-                        Save Purchase
-                    </button>
+                    </div>
 
-                </div>
+                </form>
 
             </div>
 

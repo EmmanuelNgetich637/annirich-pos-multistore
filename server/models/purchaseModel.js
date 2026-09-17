@@ -112,7 +112,13 @@ const getAllPurchases = async (storeId) => {
         `
         SELECT
             p.*,
-            s.name AS supplier_name
+            s.name AS supplier_name,
+            (
+                SELECT COUNT(*)
+                FROM purchase_items pi
+                WHERE pi.purchase_id = p.id
+                AND pi.store_id = p.store_id
+            ) AS items_count
         FROM purchases p
         LEFT JOIN suppliers s
             ON p.supplier_id = s.id
