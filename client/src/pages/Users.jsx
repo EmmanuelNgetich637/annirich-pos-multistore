@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import PageHeader from "../components/common/PageHeader";
 import UserStats from "../components/users/UserStats";
@@ -6,31 +6,75 @@ import UserToolbar from "../components/users/UserToolbar";
 import UserTable from "../components/users/UserTable";
 import UserModal from "../components/users/UserModal";
 
-import usersData from "../data/users";
+import {
+    getUsers,
+    deleteUser,
+    updateUserStatus
+} from "../api/userApi";
 
 function Users() {
 
-    const [users] = useState(usersData);
+    const [users, setUsers] = useState([]);
 
     const [search, setSearch] = useState("");
     const [role, setRole] = useState("All");
     const [status, setStatus] = useState("All");
 
-    const [openModal, setOpenModal] =
-        useState(false);
+    const [openModal, setOpenModal] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
 
-    const [selectedUser, setSelectedUser] =
-        useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    const loadUsers = async () => {
+
+        try {
+
+            setLoading(true);
+            setError("");
+
+            const response = await getUsers();
+
+            setUsers(response?.data || []);
+
+        } catch (err) {
+
+            console.error(
+                "Failed to load users:",
+                err
+            );
+
+            setError(
+                err?.response?.data?.message ||
+                "Failed to load users."
+            );
+
+        } finally {
+
+            setLoading(false);
+
+        }
+    };
+
+    useEffect(() => {
+        loadUsers();
+    }, []);
 
     const filteredUsers = users.filter(user => {
 
-        const term = search.toLowerCase();
+        const term = search
+            .trim()
+            .toLowerCase();
 
         const matchesSearch =
-            user.name
+            !term ||
+            String(user.full_name || "")
                 .toLowerCase()
                 .includes(term) ||
-            user.email
+            String(user.username || "")
+                .toLowerCase()
+                .includes(term) ||
+            String(user.email || "")
                 .toLowerCase()
                 .includes(term);
 
@@ -50,20 +94,79 @@ function Users() {
     });
 
     const handleAdd = () => {
+
         setSelectedUser(null);
         setOpenModal(true);
+
     };
 
-    const handleEdit = user => {
+    const handleEdit = (user) => {
+
         setSelectedUser(user);
         setOpenModal(true);
+
     };
 
-    const handleDelete = user => {
-        console.log(
-            "Delete user:",
-            user
+    const handleDelete = async (user) => {
+
+        const confirmed = window.confirm(
+            `Deactivate ${user.full_name}?`
         );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+
+            await deleteUser(user.id);
+
+            await loadUsers();
+
+        } catch (err) {
+
+            console.error(
+                "Failed to deactivate user:",
+                err
+            );
+
+            alert(
+                err?.response?.data?.message ||
+                "Failed to deactivate user."
+            );
+
+        }
+    };
+
+    const handleToggleStatus = async (user) => {
+
+        const newStatus =
+            user.status === "active"
+                ? "inactive"
+                : "active";
+
+        try {
+
+            await updateUserStatus(
+                user.id,
+                newStatus
+            );
+
+            await loadUsers();
+
+        } catch (err) {
+
+            console.error(
+                "Failed to update user status:",
+                err
+            );
+
+            alert(
+                err?.response?.data?.message ||
+                "Failed to update user status."
+            );
+
+        }
     };
 
     return (
@@ -82,9 +185,7 @@ function Users() {
                 }
             />
 
-            <UserStats
-                users={users}
-            />
+            <UserStats />
 
             <UserToolbar
                 search={search}
@@ -95,18 +196,39 @@ function Users() {
                 setStatus={setStatus}
             />
 
-            <UserTable
-                users={filteredUsers}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-            />
+            {error && (
+
+                <div className="form-error">
+                    {error}
+                </div>
+
+            )}
+
+            {loading ? (
+
+                <div className="user-empty">
+                    Loading users...
+                </div>
+
+            ) : (
+
+                <UserTable
+                    users={filteredUsers}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onToggleStatus={handleToggleStatus}
+                />
+
+            )}
 
             <UserModal
                 open={openModal}
                 user={selectedUser}
-                onClose={() =>
-                    setOpenModal(false)
-                }
+                onClose={() => {
+                    setOpenModal(false);
+                    setSelectedUser(null);
+                }}
+                onSaved={loadUsers}
             />
 
         </div>

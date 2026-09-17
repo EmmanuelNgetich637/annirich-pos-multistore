@@ -8,10 +8,12 @@ function UserToolbar({
     status,
     setStatus
 }) {
+
     return (
         <div className="user-toolbar">
 
             <div className="user-search">
+
                 <FiSearch />
 
                 <input
@@ -22,11 +24,13 @@ function UserToolbar({
                         setSearch(e.target.value)
                     }
                 />
+
             </div>
 
             <div className="user-filters">
 
                 <div className="user-filter">
+
                     <FiFilter />
 
                     <select
@@ -35,26 +39,25 @@ function UserToolbar({
                             setRole(e.target.value)
                         }
                     >
+
                         <option value="All">
                             All Roles
                         </option>
 
-                        <option value="Administrator">
+                        <option value="admin">
                             Administrator
                         </option>
 
-                        <option value="Manager">
+                        <option value="manager">
                             Manager
                         </option>
 
-                        <option value="Cashier">
+                        <option value="cashier">
                             Cashier
                         </option>
 
-                        <option value="Inventory Manager">
-                            Inventory Manager
-                        </option>
                     </select>
+
                 </div>
 
                 <select
@@ -63,17 +66,19 @@ function UserToolbar({
                         setStatus(e.target.value)
                     }
                 >
+
                     <option value="All">
                         All Status
                     </option>
 
-                    <option value="Active">
+                    <option value="active">
                         Active
                     </option>
 
-                    <option value="Inactive">
+                    <option value="inactive">
                         Inactive
                     </option>
+
                 </select>
 
             </div>

@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import {
     FiUsers,
     FiUserCheck,
@@ -5,41 +7,67 @@ import {
     FiShield
 } from "react-icons/fi";
 
-function UserStats({ users }) {
+import { getUserStatistics } from "../../api/userApi";
 
-    const total = users.length;
+function UserStats() {
 
-    const active = users.filter(
-        user => user.status === "Active"
-    ).length;
+    const [stats, setStats] = useState({
+        totalUsers: 0,
+        activeUsers: 0,
+        inactiveUsers: 0,
+        administrators: 0
+    });
 
-    const inactive = users.filter(
-        user => user.status === "Inactive"
-    ).length;
+    const [loading, setLoading] = useState(true);
 
-    const administrators = users.filter(
-        user => user.role === "Administrator"
-    ).length;
+    useEffect(() => {
 
-    const stats = [
+        const loadStats = async () => {
+
+            try {
+
+                const response = await getUserStatistics();
+
+                setStats(response?.data || {});
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to load user statistics:",
+                    error
+                );
+
+            } finally {
+
+                setLoading(false);
+
+            }
+
+        };
+
+        loadStats();
+
+    }, []);
+
+    const statCards = [
         {
             title: "Total Users",
-            value: total,
+            value: Number(stats.totalUsers ?? 0),
             icon: <FiUsers />
         },
         {
             title: "Active Users",
-            value: active,
+            value: Number(stats.activeUsers ?? 0),
             icon: <FiUserCheck />
         },
         {
             title: "Inactive Users",
-            value: inactive,
+            value: Number(stats.inactiveUsers ?? 0),
             icon: <FiUserX />
         },
         {
             title: "Administrators",
-            value: administrators,
+            value: Number(stats.administrators ?? 0),
             icon: <FiShield />
         }
     ];
@@ -47,20 +75,31 @@ function UserStats({ users }) {
     return (
         <div className="user-stats">
 
-            {stats.map(stat => (
+            {statCards.map(stat => (
+
                 <div
                     className="user-stat-card"
                     key={stat.title}
                 >
+
                     <div className="user-stat-icon">
                         {stat.icon}
                     </div>
 
                     <div>
-                        <span>{stat.title}</span>
-                        <strong>{stat.value}</strong>
+
+                        <span>
+                            {stat.title}
+                        </span>
+
+                        <strong>
+                            {loading ? "..." : stat.value}
+                        </strong>
+
                     </div>
+
                 </div>
+
             ))}
 
         </div>
