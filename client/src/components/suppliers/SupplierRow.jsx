@@ -6,40 +6,54 @@ import {
 
 import StatusBadge from "../common/StatusBadge";
 
-function SupplierRow({ supplier }) {
+function SupplierRow({
+    supplier,
+    onView,
+    onEdit,
+    onDelete
+}) {
 
     return (
+
         <tr>
 
             <td>
                 <strong>
-                    {supplier.name}
+                    {supplier.name || "—"}
                 </strong>
             </td>
 
             <td>
-                {supplier.contactPerson}
+                {supplier.contact_person || "—"}
             </td>
 
             <td>
-                {supplier.phone}
+                {supplier.phone || "—"}
             </td>
 
             <td>
-                {supplier.email}
+                {supplier.email || "—"}
             </td>
 
             <td>
-                {supplier.purchases}
+                {Number(
+                    supplier.purchases ?? 0
+                ).toLocaleString()}
             </td>
 
             <td>
-                KSh {supplier.balance.toLocaleString()}
+                KSh {Number(
+                    supplier.balance ?? 0
+                ).toLocaleString()}
             </td>
 
             <td>
                 <StatusBadge
-                    status={supplier.status}
+                    status={
+                        supplier.status === "active"
+                            ? "Active"
+                            : "Inactive"
+                    }
                 />
             </td>
 
@@ -47,15 +61,33 @@ function SupplierRow({ supplier }) {
 
                 <div className="table-actions">
 
-                    <button className="icon-btn">
+                    <button
+                        className="icon-btn"
+                        onClick={() =>
+                            onView?.(supplier)
+                        }
+                        title="View supplier"
+                    >
                         <FiEye />
                     </button>
 
-                    <button className="icon-btn">
+                    <button
+                        className="icon-btn"
+                        onClick={() =>
+                            onEdit?.(supplier)
+                        }
+                        title="Edit supplier"
+                    >
                         <FiEdit2 />
                     </button>
 
-                    <button className="icon-btn danger">
+                    <button
+                        className="icon-btn danger"
+                        onClick={() =>
+                            onDelete?.(supplier)
+                        }
+                        title="Delete supplier"
+                    >
                         <FiTrash2 />
                     </button>
 
@@ -64,6 +96,7 @@ function SupplierRow({ supplier }) {
             </td>
 
         </tr>
+
     );
 }
 

@@ -6,40 +6,60 @@ import {
 
 import StatusBadge from "../common/StatusBadge";
 
-function CustomerRow({ customer }) {
+
+function CustomerRow({
+    customer,
+    onView,
+    onEdit,
+    onDelete
+}) {
+
+    const purchases =
+        Number(customer.purchases ?? 0);
+
+    const totalSpent =
+        Number(customer.totalSpent ?? 0);
+
+    const balance =
+        Number(customer.balance ?? 0);
+
 
     return (
         <tr>
 
             <td>
                 <strong>
-                    {customer.name}
+                    {customer.name || "—"}
                 </strong>
             </td>
 
             <td>
-                {customer.phone}
+                {customer.phone || "—"}
             </td>
 
             <td>
-                {customer.email}
+                {customer.email || "—"}
             </td>
 
             <td>
-                {customer.purchases}
+                {purchases.toLocaleString()}
             </td>
 
             <td>
-                KSh {customer.totalSpent.toLocaleString()}
+                KSh {totalSpent.toLocaleString()}
             </td>
 
             <td>
-                KSh {customer.balance.toLocaleString()}
+                KSh {balance.toLocaleString()}
             </td>
 
             <td>
                 <StatusBadge
-                    status={customer.status}
+                    status={
+                        customer.status === "active"
+                            ? "Active"
+                            : "Inactive"
+                    }
                 />
             </td>
 
@@ -47,15 +67,33 @@ function CustomerRow({ customer }) {
 
                 <div className="table-actions">
 
-                    <button className="icon-btn">
+                    <button
+                        className="icon-btn"
+                        onClick={() =>
+                            onView?.(customer)
+                        }
+                        title="View customer"
+                    >
                         <FiEye />
                     </button>
 
-                    <button className="icon-btn">
+                    <button
+                        className="icon-btn"
+                        onClick={() =>
+                            onEdit?.(customer)
+                        }
+                        title="Edit customer"
+                    >
                         <FiEdit2 />
                     </button>
 
-                    <button className="icon-btn danger">
+                    <button
+                        className="icon-btn danger"
+                        onClick={() =>
+                            onDelete?.(customer)
+                        }
+                        title="Delete customer"
+                    >
                         <FiTrash2 />
                     </button>
 
@@ -66,5 +104,6 @@ function CustomerRow({ customer }) {
         </tr>
     );
 }
+
 
 export default CustomerRow;

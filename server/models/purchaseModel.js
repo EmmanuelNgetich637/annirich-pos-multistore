@@ -260,6 +260,25 @@ const getPurchasesPaginated = async (
 };
 
 
+// Count purchases for a supplier
+const countPurchasesBySupplier = async (supplierId, storeId) => {
+    const [[result]] = await db.query(
+        `
+        SELECT COUNT(*) AS total
+        FROM purchases
+        WHERE supplier_id = ?
+        AND store_id = ?
+        `,
+        [
+            supplierId,
+            storeId
+        ]
+    );
+
+    return Number(result.total);
+};
+
+
 // Purchase statistics
 const getPurchaseStatistics = async (storeId) => {
 
@@ -306,5 +325,6 @@ module.exports = {
     getPurchaseById,
     searchPurchases,
     getPurchasesPaginated,
+    countPurchasesBySupplier,
     getPurchaseStatistics
 };

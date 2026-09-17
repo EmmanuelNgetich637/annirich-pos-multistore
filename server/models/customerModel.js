@@ -3,11 +3,32 @@ const db = require("../config/db");
 const getAllCustomers = async (storeId) => {
     const [rows] = await db.query(
         `
-        SELECT *
-        FROM customers
-        WHERE store_id = ?
-        AND status = 'active'
-        ORDER BY name ASC
+        SELECT
+            c.*,
+            COALESCE(
+                (
+                    SELECT COUNT(*)
+                    FROM sales s
+                    WHERE s.customer_id = c.id
+                    AND s.store_id = c.store_id
+                    AND s.payment_status = 'paid'
+                ),
+                0
+            ) AS purchases,
+            COALESCE(
+                (
+                    SELECT SUM(s.total)
+                    FROM sales s
+                    WHERE s.customer_id = c.id
+                    AND s.store_id = c.store_id
+                    AND s.payment_status = 'paid'
+                ),
+                0
+            ) AS totalSpent
+        FROM customers c
+        WHERE c.store_id = ?
+        AND c.status = 'active'
+        ORDER BY c.name ASC
         `,
         [storeId]
     );
@@ -18,11 +39,32 @@ const getAllCustomers = async (storeId) => {
 const getCustomerById = async (id, storeId) => {
     const [rows] = await db.query(
         `
-        SELECT *
-        FROM customers
-        WHERE id = ?
-        AND store_id = ?
-        AND status = 'active'
+        SELECT
+            c.*,
+            COALESCE(
+                (
+                    SELECT COUNT(*)
+                    FROM sales s
+                    WHERE s.customer_id = c.id
+                    AND s.store_id = c.store_id
+                    AND s.payment_status = 'paid'
+                ),
+                0
+            ) AS purchases,
+            COALESCE(
+                (
+                    SELECT SUM(s.total)
+                    FROM sales s
+                    WHERE s.customer_id = c.id
+                    AND s.store_id = c.store_id
+                    AND s.payment_status = 'paid'
+                ),
+                0
+            ) AS totalSpent
+        FROM customers c
+        WHERE c.id = ?
+        AND c.store_id = ?
+        AND c.status = 'active'
         LIMIT 1
         `,
         [id, storeId]
