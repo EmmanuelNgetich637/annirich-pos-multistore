@@ -1,6 +1,7 @@
 const mpesaService = require("../services/mpesaService");
 const Mpesa = require("../models/mpesaModel");
 const Sale = require("../models/saleModel");
+const SaleService = require("../services/saleService");
 
 
 function getSafaricomErrorMessage(error) {
@@ -289,18 +290,17 @@ const initiatePayment = async (req, res) => {
 
         /*
          * If Safaricom rejected the STK request,
-         * mark the sale as failed too.
+         * restore the stock and mark the sale failed.
+         *
+         * failMpesaSale() is idempotent.
          */
         if (responseCode !== "0") {
 
-            await Sale.updatePaymentStatus(
-
+            await SaleService.failMpesaSale(
                 sale.id,
-
                 storeId,
-
-                "failed"
-
+                stkResponse.ResponseDescription ||
+                    "M-Pesa STK request was rejected"
             );
 
         }
@@ -507,7 +507,7 @@ const callback = async (req, res) => {
         if (Number(ResultCode) !== 0) {
 
             /*
-             * Update M-Pesa transaction.
+             * Update M-Pesa transaction first.
              */
             await Mpesa.updateTransaction(
 
@@ -531,18 +531,18 @@ const callback = async (req, res) => {
 
 
             /*
-             * Update corresponding sale.
+             * Restore stock and mark the
+             * corresponding sale failed.
+             *
+             * This operation is idempotent.
              */
             if (transaction.sale_id) {
 
-                await Sale.updatePaymentStatus(
-
+                await SaleService.failMpesaSale(
                     transaction.sale_id,
-
                     transaction.store_id,
-
-                    "failed"
-
+                    ResultDesc ||
+                        "M-Pesa payment failed"
                 );
 
             }
@@ -677,18 +677,14 @@ const callback = async (req, res) => {
 
 
             /*
-             * Mark sale failed.
+             * Restore stock and mark sale failed.
              */
             if (transaction.sale_id) {
 
-                await Sale.updatePaymentStatus(
-
+                await SaleService.failMpesaSale(
                     transaction.sale_id,
-
                     transaction.store_id,
-
-                    "failed"
-
+                    "Callback amount does not match transaction amount."
                 );
 
             }
@@ -762,18 +758,14 @@ const callback = async (req, res) => {
 
 
                 /*
-                 * Mark sale failed.
+                 * Restore stock and mark sale failed.
                  */
                 if (transaction.sale_id) {
 
-                    await Sale.updatePaymentStatus(
-
+                    await SaleService.failMpesaSale(
                         transaction.sale_id,
-
                         transaction.store_id,
-
-                        "failed"
-
+                        "Callback phone number does not match transaction phone number."
                     );
 
                 }
