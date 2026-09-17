@@ -10,8 +10,20 @@ function SalesToolbar({
     paymentMethod,
     setPaymentMethod,
     status,
-    setStatus
+    setStatus,
+    selectedDate,
+    setSelectedDate,
+    onExport,
+    exporting
 }) {
+
+    const handleDateChange = (e) => {
+        setSelectedDate(e.target.value);
+    };
+
+    const clearDate = () => {
+        setSelectedDate("");
+    };
 
     return (
         <div className="sales-toolbar">
@@ -74,19 +86,51 @@ function SalesToolbar({
                         Pending
                     </option>
 
+                    <option value="Failed">
+                        Failed
+                    </option>
+
                     <option value="Cancelled">
                         Cancelled
                     </option>
                 </select>
 
-                <button className="sales-date-btn">
+                <label className="sales-date-btn">
                     <FiCalendar />
-                    Today
-                </button>
 
-                <button className="secondary-btn">
+                    <span>
+                        {selectedDate || "Today"}
+                    </span>
+
+                    <input
+                        type="date"
+                        value={selectedDate}
+                        onChange={handleDateChange}
+                        aria-label="Filter sales by date"
+                    />
+                </label>
+
+                {selectedDate && (
+                    <button
+                        type="button"
+                        className="secondary-btn"
+                        onClick={clearDate}
+                    >
+                        Today
+                    </button>
+                )}
+
+                <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={onExport}
+                    disabled={exporting}
+                >
                     <FiDownload />
-                    Export
+
+                    {exporting
+                        ? "Exporting..."
+                        : "Export"}
                 </button>
 
             </div>

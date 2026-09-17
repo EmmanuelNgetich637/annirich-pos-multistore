@@ -2,77 +2,50 @@ import {
     ResponsiveContainer,
     PieChart,
     Pie,
-    Cell,
     Tooltip,
-    Legend
+    Cell
 } from "recharts";
 
-function SalesByCategory({ data }) {
-
-    const colors = [
-        "#2563EB",
-        "#16A34A",
-        "#F59E0B",
-        "#7C3AED",
-        "#64748B"
-    ];
-
+function SalesByCategory({ data = [] }) {
     return (
-        <div className="report-chart-card">
-
-            <div className="report-chart-header">
-
+        <div className="sales-by-category">
+            <div className="report-section-header">
                 <div>
                     <h3>Sales by Category</h3>
-
-                    <span>
-                        Revenue distribution
-                    </span>
+                    <p>Revenue by product category.</p>
                 </div>
-
             </div>
 
-            <div className="report-pie-chart">
-
-                <ResponsiveContainer
-                    width="100%"
-                    height={320}
-                >
+            {data.length === 0 ? (
+                <div className="report-empty">
+                    No category sales for this period.
+                </div>
+            ) : (
+                <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
-
                         <Pie
                             data={data}
-                            dataKey="value"
+                            dataKey="revenue"
                             nameKey="name"
                             cx="50%"
-                            cy="45%"
-                            outerRadius={95}
-                            innerRadius={55}
+                            cy="50%"
+                            outerRadius={100}
+                            label
                         >
-                            {data.map((entry, index) => (
-                                <Cell
-                                    key={entry.name}
-                                    fill={
-                                        colors[
-                                            index %
-                                            colors.length
-                                        ]
-                                    }
-                                />
+                            {data.map((_, index) => (
+                                <Cell key={`cell-${index}`} />
                             ))}
                         </Pie>
 
-                        <Tooltip />
-
-                        <Legend
-                            verticalAlign="bottom"
+                        <Tooltip
+                            formatter={(value) => [
+                                `KSh ${Number(value).toLocaleString()}`,
+                                "Revenue"
+                            ]}
                         />
-
                     </PieChart>
                 </ResponsiveContainer>
-
-            </div>
-
+            )}
         </div>
     );
 }

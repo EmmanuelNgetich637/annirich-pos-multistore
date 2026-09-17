@@ -1,77 +1,50 @@
-import { FiPackage } from "react-icons/fi";
-
-function TopProducts({ products }) {
-
+function TopProducts({ products = [] }) {
     return (
-        <div className="top-products-card">
-
-            <div className="report-chart-header">
-
+        <div className="top-products">
+            <div className="report-section-header">
                 <div>
-                    <h3>Top Selling Products</h3>
-
-                    <span>
-                        Best performing products
-                    </span>
+                    <h3>Top Products</h3>
+                    <p>Best-selling products for the selected period.</p>
                 </div>
-
             </div>
 
-            <div className="top-products-list">
+            {products.length === 0 ? (
+                <div className="report-empty">
+                    No product sales for this period.
+                </div>
+            ) : (
+                <div className="top-products-list">
+                    {products.map((product, index) => (
+                        <div
+                            className="top-product-row"
+                            key={product.id}
+                        >
+                            <div className="top-product-rank">
+                                #{index + 1}
+                            </div>
 
-                {products.map((product, index) => (
+                            <div className="top-product-info">
+                                <strong>
+                                    {product.name}
+                                </strong>
 
-                    <div
-                        className="top-product-row"
-                        key={product.id}
-                    >
+                                <span>
+                                    {product.category || "Uncategorized"}
+                                </span>
+                            </div>
 
-                        <div className="top-product-rank">
-                            {index + 1}
+                            <div className="top-product-quantity">
+                                {Number(product.quantity || 0)} sold
+                            </div>
+
+                            <div className="top-product-revenue">
+                                KSh{" "}
+                                {Number(product.revenue || 0).toLocaleString()}
+                            </div>
                         </div>
-
-                        <div className="top-product-icon">
-                            <FiPackage />
-                        </div>
-
-                        <div className="top-product-info">
-
-                            <strong>
-                                {product.name}
-                            </strong>
-
-                            <span>
-                                {product.category}
-                            </span>
-
-                        </div>
-
-                        <div className="top-product-quantity">
-
-                            <strong>
-                                {product.quantity}
-                            </strong>
-
-                            <span>
-                                units
-                            </span>
-
-                        </div>
-
-                        <div className="top-product-revenue">
-
-                            <strong>
-                                KES {product.revenue.toLocaleString()}
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-                ))}
-
-            </div>
-
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

@@ -136,6 +136,12 @@ function Sales() {
     const [status, setStatus] =
         useState("All");
 
+    const [selectedDate, setSelectedDate] =
+        useState("");
+
+    const [exporting, setExporting] =
+        useState(false);
+
     const [selectedSale, setSelectedSale] =
         useState(null);
 
@@ -269,13 +275,250 @@ function Sales() {
                 status === "All" ||
                 sale.status === status;
 
+            const matchesDate =
+                !selectedDate ||
+                (
+                    sale.created_at &&
+                    new Date(sale.created_at)
+                        .toISOString()
+                        .slice(0, 10) === selectedDate
+                );
+
             return (
                 matchesSearch &&
                 matchesPayment &&
-                matchesStatus
+                matchesStatus &&
+                matchesDate
             );
 
         });
+
+
+    const handleExport = async () => {
+
+        try {
+
+            setExporting(true);
+
+            const response =
+                await getSales();
+
+            const saleData =
+                response?.data || [];
+
+            let exportSales =
+                Array.isArray(saleData)
+                    ? saleData.map(normalizeSale)
+                    : [];
+
+
+            if (selectedDate) {
+
+                exportSales =
+                    exportSales.filter((sale) => {
+
+                        if (!sale.created_at) {
+                            return false;
+                        }
+
+                        return (
+                            new Date(sale.created_at)
+                                .toISOString()
+                                .slice(0, 10) === selectedDate
+                        );
+
+                    });
+
+            }
+
+
+            const term =
+                search.toLowerCase();
+
+
+            exportSales =
+                exportSales.filter((sale) => {
+
+                    const matchesSearch =
+                        sale.invoice
+                            .toLowerCase()
+                            .includes(term) ||
+
+                        sale.customer
+                            .toLowerCase()
+                            .includes(term) ||
+
+                        sale.cashier
+                            .toLowerCase()
+                            .includes(term);
+
+                    const matchesPayment =
+                        paymentMethod === "All" ||
+                        sale.paymentMethod ===
+                            paymentMethod;
+
+                    const matchesStatus =
+                        status === "All" ||
+                        sale.status === status;
+
+                    return (
+                        matchesSearch &&
+                        matchesPayment &&
+                        matchesStatus
+                    );
+
+                });
+
+
+            if (exportSales.length === 0) {
+
+                alert(
+                    "No sales found for the selected filters."
+                );
+
+                return;
+
+            }
+
+
+            const headers = [
+                "Invoice",
+                "Customer",
+                "Cashier",
+                "Date",
+                "Time",
+                "Payment Method",
+                "Status",
+                "Subtotal",
+                "Discount",
+                "Total"
+            ];
+
+
+            const rows =
+                exportSales.map((sale) => [
+
+                    sale.invoice,
+
+                    sale.customer,
+
+                    sale.cashier,
+
+                    sale.date,
+
+                    sale.time,
+
+                    sale.paymentMethod,
+
+                    sale.status,
+
+                    sale.subtotal,
+
+                    sale.discount,
+
+                    sale.total
+
+                ]);
+
+
+            const csvRows = [
+                headers,
+                ...rows
+            ];
+
+
+            const csv =
+                csvRows
+                    .map((row) =>
+                        row
+                            .map((value) => {
+
+                                const text =
+                                    String(
+                                        value ?? ""
+                                    );
+
+                                return `"${text.replace(
+                                    /"/g,
+                                    '""'
+                                )}"`;
+
+                            })
+                            .join(",")
+                    )
+                    .join("\r\n");
+
+
+            const blob =
+                new Blob(
+                    [csv],
+                    {
+                        type:
+                            "text/csv;charset=utf-8;"
+                    }
+                );
+
+
+            const url =
+                URL.createObjectURL(blob);
+
+
+            const link =
+                document.createElement("a");
+
+
+            link.href = url;
+
+
+            link.download =
+                selectedDate
+                    ? `sales-${selectedDate}.csv`
+                    : "sales-export.csv";
+
+
+            link.style.display =
+                "none";
+
+
+            document.body.appendChild(
+                link
+            );
+
+
+            link.click();
+
+
+            document.body.removeChild(
+                link
+            );
+
+
+            setTimeout(() => {
+
+                URL.revokeObjectURL(url);
+
+            }, 1000);
+
+
+        } catch (err) {
+
+            console.error(
+                "Export failed:",
+                err
+            );
+
+            alert(
+                err?.response?.data?.message ||
+                "Failed to export sales."
+            );
+
+        } finally {
+
+            setExporting(false);
+
+        }
+
+    };
 
 
     return (
@@ -289,9 +532,13 @@ function Sales() {
 
 
             {error && (
+
                 <div className="error-state">
+
                     {error}
+
                 </div>
+
             )}
 
 
@@ -301,7 +548,9 @@ function Sales() {
 
 
             <SalesToolbar
+
                 search={search}
+
                 setSearch={setSearch}
 
                 paymentMethod={
@@ -313,21 +562,50 @@ function Sales() {
                 }
 
                 status={status}
-                setStatus={setStatus}
+
+                setStatus={
+                    setStatus
+                }
+
+                selectedDate={
+                    selectedDate
+                }
+
+                setSelectedDate={
+                    setSelectedDate
+                }
+
+                onExport={
+                    handleExport
+                }
+
+                exporting={
+                    exporting
+                }
+
             />
 
 
             {loading ? (
 
                 <div className="loading-state">
+
                     Loading sales...
+
                 </div>
 
             ) : (
 
                 <SalesTable
-                    sales={filteredSales}
-                    onView={handleViewSale}
+
+                    sales={
+                        filteredSales
+                    }
+
+                    onView={
+                        handleViewSale
+                    }
+
                 />
 
             )}
@@ -336,18 +614,24 @@ function Sales() {
             {detailsLoading && (
 
                 <div className="loading-state">
+
                     Loading sale details...
+
                 </div>
 
             )}
 
 
             <SaleDetailsModal
-                sale={selectedSale}
+
+                sale={
+                    selectedSale
+                }
 
                 onClose={() =>
                     setSelectedSale(null)
                 }
+
             />
 
         </div>
@@ -357,4 +641,4 @@ function Sales() {
 }
 
 
-export default Sales;
+export default Sales; 

@@ -26,13 +26,11 @@ function App() {
     return (
         <Routes>
 
-            {/* Public */}
             <Route
                 path="/login"
                 element={<Login />}
             />
 
-            {/* Protected */}
             <Route element={<ProtectedRoute />}>
 
                 <Route element={<AppLayout />}>

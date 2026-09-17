@@ -1,57 +1,50 @@
-import {
-    FiDollarSign,
-    FiShoppingBag,
-    FiTrendingUp,
-    FiCreditCard
-} from "react-icons/fi";
+function formatCurrency(value) {
+    return `KSh ${Number(value || 0).toLocaleString("en-KE", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`;
+}
 
 function ReportStats({ stats }) {
+    if (!stats) {
+        return null;
+    }
 
     const cards = [
         {
-            title: "Total Sales",
-            value: `KES ${stats.totalSales.toLocaleString()}`,
-            icon: <FiDollarSign />
+            label: "Total Sales",
+            value: formatCurrency(stats.totalSales)
         },
         {
-            title: "Total Orders",
-            value: stats.totalOrders,
-            icon: <FiShoppingBag />
+            label: "Total Orders",
+            value: Number(stats.totalOrders || 0).toLocaleString()
         },
         {
-            title: "Gross Profit",
-            value: `KES ${stats.grossProfit.toLocaleString()}`,
-            icon: <FiTrendingUp />
+            label: "Estimated Gross Profit",
+            value: formatCurrency(stats.grossProfit)
         },
         {
-            title: "Average Order",
-            value: `KES ${stats.averageOrder.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            })}`,
-            icon: <FiCreditCard />
+            label: "Average Order",
+            value: formatCurrency(stats.averageOrder)
         }
     ];
 
     return (
         <div className="report-stats">
-
-            {cards.map(card => (
+            {cards.map((card) => (
                 <div
                     className="report-stat-card"
-                    key={card.title}
+                    key={card.label}
                 >
-                    <div className="report-stat-icon">
-                        {card.icon}
-                    </div>
+                    <span className="report-stat-label">
+                        {card.label}
+                    </span>
 
-                    <div className="report-stat-content">
-                        <span>{card.title}</span>
-                        <strong>{card.value}</strong>
-                    </div>
+                    <strong className="report-stat-value">
+                        {card.value}
+                    </strong>
                 </div>
             ))}
-
         </div>
     );
 }

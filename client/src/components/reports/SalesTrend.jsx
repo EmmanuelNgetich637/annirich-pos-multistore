@@ -2,79 +2,67 @@ import {
     ResponsiveContainer,
     AreaChart,
     Area,
-    CartesianGrid,
     XAxis,
     YAxis,
+    CartesianGrid,
     Tooltip
 } from "recharts";
 
-function SalesTrend({ data }) {
+function formatDate(date) {
+    if (!date) return "";
+
+    return new Date(date).toLocaleDateString("en-KE", {
+        day: "2-digit",
+        month: "short"
+    });
+}
+
+function SalesTrend({ data = [] }) {
+    const chartData = data.map((item) => ({
+        date: formatDate(item.date),
+        sales: Number(item.sales || 0),
+        orders: Number(item.orders || 0)
+    }));
 
     return (
-        <div className="report-chart-card">
-
-            <div className="report-chart-header">
-
+        <div className="sales-trend">
+            <div className="report-section-header">
                 <div>
                     <h3>Sales Trend</h3>
-                    <span>
-                        Sales performance for the selected period
-                    </span>
+                    <p>Revenue generated during the selected period.</p>
                 </div>
-
-                <select defaultValue="week">
-                    <option value="week">
-                        This Week
-                    </option>
-
-                    <option value="month">
-                        This Month
-                    </option>
-
-                    <option value="year">
-                        This Year
-                    </option>
-                </select>
-
             </div>
 
-            <div className="report-chart">
+            {chartData.length === 0 ? (
+                <div className="report-empty">
+                    No sales data for this period.
+                </div>
+            ) : (
+                <ResponsiveContainer width="100%" height={320}>
+                    <AreaChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
 
-                <ResponsiveContainer
-                    width="100%"
-                    height={320}
-                >
-                    <AreaChart data={data}>
-
-                        <CartesianGrid
-                            strokeDasharray="3 3"
-                        />
-
-                        <XAxis
-                            dataKey="day"
-                        />
+                        <XAxis dataKey="date" />
 
                         <YAxis />
 
                         <Tooltip
-                            formatter={(value) =>
-                                `KES ${value.toLocaleString()}`
-                            }
+                            formatter={(value) => [
+                                `KSh ${Number(value).toLocaleString()}`,
+                                "Sales"
+                            ]}
                         />
 
                         <Area
                             type="monotone"
                             dataKey="sales"
-                            stroke="#2563EB"
-                            fill="#DBEAFE"
-                            strokeWidth={2}
+                            fill="currentColor"
+                            stroke="currentColor"
+                            fillOpacity={0.15}
                         />
-
                     </AreaChart>
                 </ResponsiveContainer>
-
-            </div>
-
+            )}
         </div>
     );
 }

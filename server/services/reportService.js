@@ -1,126 +1,49 @@
 const Report = require("../models/reportModel");
 
-
-/*
-|--------------------------------------------------------------------------
-| Sales Report
-|--------------------------------------------------------------------------
-*/
-
-const getSalesReport = async (
-    startDate,
-    endDate,
-    storeId
-) => {
-
-    return await Report.getSalesReport(
-        startDate,
-        endDate,
-        storeId
-    );
-
+const getSalesReport = async (startDate, endDate, storeId) => {
+    return Report.getSalesReport(startDate, endDate, storeId);
 };
 
-
-/*
-|--------------------------------------------------------------------------
-| Purchase Report
-|--------------------------------------------------------------------------
-*/
-
-const getPurchaseReport = async (
-    startDate,
-    endDate,
-    storeId
-) => {
-
-    return await Report.getPurchaseReport(
-        startDate,
-        endDate,
-        storeId
-    );
-
+const getPurchaseReport = async (startDate, endDate, storeId) => {
+    return Report.getPurchaseReport(startDate, endDate, storeId);
 };
 
-
-/*
-|--------------------------------------------------------------------------
-| Expense Report
-|--------------------------------------------------------------------------
-*/
-
-const getExpenseReport = async (
-    startDate,
-    endDate,
-    storeId
-) => {
-
-    return await Report.getExpenseReport(
-        startDate,
-        endDate,
-        storeId
-    );
-
+const getExpenseReport = async (startDate, endDate, storeId) => {
+    return Report.getExpenseReport(startDate, endDate, storeId);
 };
-
-
-/*
-|--------------------------------------------------------------------------
-| Inventory Report
-|--------------------------------------------------------------------------
-*/
 
 const getInventoryReport = async (storeId) => {
-
-    return await Report.getInventoryReport(
-        storeId
-    );
-
+    return Report.getInventoryReport(storeId);
 };
 
-
-/*
-|--------------------------------------------------------------------------
-| Profit Report
-|--------------------------------------------------------------------------
-*/
-
-const getProfitReport = async (
-    startDate,
-    endDate,
-    storeId
-) => {
-
-    const result =
-        await Report.getProfitReport(
-            startDate,
-            endDate,
-            storeId
-        );
-
-    return {
-
-        totalSales:
-            result.revenue,
-
-        totalPurchases:
-            result.purchases,
-
-        totalExpenses:
-            result.expenses,
-
-        grossProfit:
-            result.profit
-
-    };
-
+const getReportSummary = async (startDate, endDate, storeId) => {
+    return Report.getReportSummary(startDate, endDate, storeId);
 };
 
+const getSalesTrend = async (startDate, endDate, storeId) => {
+    return Report.getSalesTrend(startDate, endDate, storeId);
+};
+
+const getSalesByCategory = async (startDate, endDate, storeId) => {
+    return Report.getSalesByCategory(startDate, endDate, storeId);
+};
+
+const getTopProducts = async (startDate, endDate, storeId) => {
+    return Report.getTopProducts(startDate, endDate, storeId);
+};
+
+const getProfitReport = async (startDate, endDate, storeId) => {
+    return Report.getProfitReport(startDate, endDate, storeId);
+};
 
 module.exports = {
     getSalesReport,
     getPurchaseReport,
     getExpenseReport,
     getInventoryReport,
+    getReportSummary,
+    getSalesTrend,
+    getSalesByCategory,
+    getTopProducts,
     getProfitReport
 };

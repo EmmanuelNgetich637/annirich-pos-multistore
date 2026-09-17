@@ -228,6 +228,158 @@ const getProfitReport = async (req, res) => {
 };
 
 
+/*
+|--------------------------------------------------------------------------
+| Report Summary
+|--------------------------------------------------------------------------
+*/
+
+const getReportSummary = async (req, res) => {
+
+    try {
+
+        const {
+            startDate,
+            endDate
+        } = req.query;
+
+        const data = await ReportService.getReportSummary(
+            startDate,
+            endDate,
+            req.storeId
+        );
+
+        return res.status(200).json({
+            success: true,
+            data
+        });
+
+    } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+};
+
+
+/*
+|--------------------------------------------------------------------------
+| Sales Trend
+|--------------------------------------------------------------------------
+*/
+
+const getSalesTrend = async (req, res) => {
+
+    try {
+
+        const {
+            startDate,
+            endDate
+        } = req.query;
+
+        const data = await ReportService.getSalesTrend(
+            startDate,
+            endDate,
+            req.storeId
+        );
+
+        return res.status(200).json({
+            success: true,
+            data
+        });
+
+    } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+};
+
+
+/*
+|--------------------------------------------------------------------------
+| Sales By Category
+|--------------------------------------------------------------------------
+*/
+
+const getSalesByCategory = async (req, res) => {
+
+    try {
+
+        const {
+            startDate,
+            endDate
+        } = req.query;
+
+        const data = await ReportService.getSalesByCategory(
+            startDate,
+            endDate,
+            req.storeId
+        );
+
+        return res.status(200).json({
+            success: true,
+            data
+        });
+
+    } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+};
+
+
+/*
+|--------------------------------------------------------------------------
+| Top Products
+|--------------------------------------------------------------------------
+*/
+
+const getTopProducts = async (req, res) => {
+
+    try {
+
+        const {
+            startDate,
+            endDate
+        } = req.query;
+
+        const data = await ReportService.getTopProducts(
+            startDate,
+            endDate,
+            req.storeId
+        );
+
+        return res.status(200).json({
+            success: true,
+            data
+        });
+
+    } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+};
+
+
 module.exports = {
 
     getSalesReport,
@@ -238,6 +390,10 @@ module.exports = {
 
     getInventoryReport,
 
-    getProfitReport
+    getProfitReport,
+    getReportSummary,
+    getSalesTrend,
+    getSalesByCategory,
+    getTopProducts
 
 };

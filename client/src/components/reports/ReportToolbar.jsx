@@ -1,70 +1,30 @@
-import { FiCalendar, FiDownload, FiPrinter } from "react-icons/fi";
-
-function ReportToolbar() {
-
+function ReportToolbar({
+    startDate,
+    endDate,
+    onStartDateChange,
+    onEndDateChange
+}) {
     return (
         <div className="report-toolbar">
+            <div className="report-date-group">
+                <label>
+                    From
+                    <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => onStartDateChange(e.target.value)}
+                    />
+                </label>
 
-            <div className="report-date-section">
-
-                <div className="report-date-input">
-                    <FiCalendar />
-
-                    <div>
-                        <span>From</span>
-
-                        <strong>
-                            01 Aug 2026
-                        </strong>
-                    </div>
-                </div>
-
-                <div className="report-date-input">
-                    <FiCalendar />
-
-                    <div>
-                        <span>To</span>
-
-                        <strong>
-                            07 Aug 2026
-                        </strong>
-                    </div>
-                </div>
-
-                <select defaultValue="all">
-                    <option value="all">
-                        All Sales
-                    </option>
-
-                    <option value="completed">
-                        Completed
-                    </option>
-
-                    <option value="pending">
-                        Pending
-                    </option>
-
-                    <option value="cancelled">
-                        Cancelled
-                    </option>
-                </select>
-
+                <label>
+                    To
+                    <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => onEndDateChange(e.target.value)}
+                    />
+                </label>
             </div>
-
-            <div className="report-actions">
-
-                <button className="secondary-btn">
-                    <FiPrinter />
-                    Print
-                </button>
-
-                <button className="primary-btn">
-                    <FiDownload />
-                    Export
-                </button>
-
-            </div>
-
         </div>
     );
 }

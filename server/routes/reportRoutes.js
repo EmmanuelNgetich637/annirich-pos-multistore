@@ -82,4 +82,39 @@ router.get(
 );
 
 
+/*
+|--------------------------------------------------------------------------
+| Report Analytics
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+    "/summary",
+    authenticate,
+    authorize("admin", "manager"),
+    reportController.getReportSummary
+);
+
+router.get(
+    "/trend",
+    authenticate,
+    authorize("admin", "manager"),
+    reportController.getSalesTrend
+);
+
+router.get(
+    "/categories",
+    authenticate,
+    authorize("admin", "manager"),
+    reportController.getSalesByCategory
+);
+
+router.get(
+    "/top-products",
+    authenticate,
+    authorize("admin", "manager"),
+    reportController.getTopProducts
+);
+
+
 module.exports = router;
