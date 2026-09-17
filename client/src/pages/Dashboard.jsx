@@ -1,4 +1,9 @@
 import {
+    useEffect,
+    useState
+} from "react";
+
+import {
     FiDollarSign,
     FiShoppingCart,
     FiPackage,
@@ -12,34 +17,112 @@ import SalesChart from "../components/dashboard/SalesChart";
 import RecentSales from "../components/dashboard/RecentSales";
 import LowStockTable from "../components/dashboard/LowStockTable";
 
+import { getDashboard } from "../api/dashboardApi";
+
 function Dashboard() {
+
+    const [dashboard, setDashboard] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+
+        const loadDashboard = async () => {
+
+            try {
+
+                setLoading(true);
+                setError("");
+
+                const response =
+                    await getDashboard();
+
+                if (response.success) {
+                    setDashboard(response.data);
+                } else {
+                    setError(
+                        response.message ||
+                        "Failed to load dashboard"
+                    );
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Dashboard loading failed:",
+                    error
+                );
+
+                setError(
+                    error.response?.data?.message ||
+                    "Failed to load dashboard"
+                );
+
+            } finally {
+
+                setLoading(false);
+
+            }
+
+        };
+
+        loadDashboard();
+
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="dashboard-loading">
+                Loading dashboard...
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="dashboard-error">
+                {error}
+            </div>
+        );
+    }
+
+    const summary =
+        dashboard?.summary || {};
 
     const stats = [
 
         {
             title: "Revenue",
-            value: "KES 1,254,000",
+            value: `KES ${Number(
+                summary.revenue || 0
+            ).toLocaleString()}`,
             icon: <FiDollarSign />,
             color: "#2563EB"
         },
 
         {
             title: "Sales",
-            value: "324",
+            value: Number(
+                summary.sales || 0
+            ).toLocaleString(),
             icon: <FiShoppingCart />,
             color: "#16A34A"
         },
 
         {
             title: "Products",
-            value: "542",
+            value: Number(
+                summary.products || 0
+            ).toLocaleString(),
             icon: <FiPackage />,
             color: "#F59E0B"
         },
 
         {
             title: "Customers",
-            value: "186",
+            value: Number(
+                summary.customers || 0
+            ).toLocaleString(),
             icon: <FiUsers />,
             color: "#8B5CF6"
         }
@@ -54,18 +137,14 @@ function Dashboard() {
 
             <section className="stats-grid">
 
-                {
+                {stats.map((item) => (
 
-                    stats.map((item) => (
+                    <StatCard
+                        key={item.title}
+                        {...item}
+                    />
 
-                        <StatCard
-                            key={item.title}
-                            {...item}
-                        />
-
-                    ))
-
-                }
+                ))}
 
             </section>
 

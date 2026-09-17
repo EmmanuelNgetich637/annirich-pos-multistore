@@ -1,21 +1,22 @@
 import { useState } from "react";
-import {
-    FiSearch,
-    FiPlus
-} from "react-icons/fi";
+import { FiSearch, FiPlus } from "react-icons/fi";
 
 function ProductSearch({ products, onAdd }) {
-
     const [search, setSearch] = useState("");
 
     const filteredProducts = products.filter((product) => {
+        const term = search.toLowerCase().trim();
 
-        const term = search.toLowerCase();
+        const name = (product.name || "").toLowerCase();
+
+        const barcode = (product.barcode || "").toLowerCase();
+
+        const category = (product.category || "").toLowerCase();
 
         return (
-            product.name.toLowerCase().includes(term) ||
-            product.barcode.toLowerCase().includes(term) ||
-            product.category.toLowerCase().includes(term)
+            name.includes(term) ||
+            barcode.includes(term) ||
+            category.includes(term)
         );
     });
 
@@ -23,64 +24,66 @@ function ProductSearch({ products, onAdd }) {
         <div className="pos-product-search">
 
             <div className="pos-search-box">
-
                 <FiSearch />
 
                 <input
                     type="text"
                     placeholder="Search product or scan barcode..."
                     value={search}
-                    onChange={(e) =>
-                        setSearch(e.target.value)
-                    }
+                    onChange={(e) => setSearch(e.target.value)}
                 />
-
             </div>
 
             <div className="pos-product-grid">
 
-                {filteredProducts.map((product) => (
+                {filteredProducts.length === 0 ? (
+                    <div className="pos-no-products">
+                        <p>No products found.</p>
+                    </div>
+                ) : (
+                    filteredProducts.map((product) => (
+                        <button
+                            key={product.id}
+                            type="button"
+                            className="pos-product-card"
+                            onClick={() => onAdd(product)}
+                            disabled={Number(product.stock) <= 0}
+                        >
+                            <div className="pos-product-info">
 
-                    <button
-                        className="pos-product-card"
-                        key={product.id}
-                        onClick={() => onAdd(product)}
-                    >
+                                <span className="pos-product-category">
+                                    {product.category}
+                                </span>
 
-                        <div className="pos-product-info">
+                                <strong>
+                                    {product.name}
+                                </strong>
 
-                            <span className="pos-product-category">
-                                {product.category}
-                            </span>
+                                <small>
+                                    Stock: {product.stock}
+                                </small>
 
-                            <strong>
-                                {product.name}
-                            </strong>
+                            </div>
 
-                            <small>
-                                Stock: {product.stock}
-                            </small>
+                            <div className="pos-product-bottom">
 
-                        </div>
+                                <strong>
+                                    KSh{" "}
+                                    {Number(
+                                        product.price || 0
+                                    ).toLocaleString()}
+                                </strong>
 
-                        <div className="pos-product-bottom">
+                                <span className="pos-add-icon">
+                                    <FiPlus />
+                                </span>
 
-                            <strong>
-                                KSh {product.price.toLocaleString()}
-                            </strong>
-
-                            <span className="pos-add-icon">
-                                <FiPlus />
-                            </span>
-
-                        </div>
-
-                    </button>
-
-                ))}
+                            </div>
+                        </button>
+                    ))
+                )}
 
             </div>
-
         </div>
     );
 }

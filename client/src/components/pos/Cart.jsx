@@ -8,6 +8,11 @@ function Cart({
     onDecrease,
     onRemove
 }) {
+    const itemCount = items.reduce(
+        (total, item) =>
+            total + Number(item.quantity || 0),
+        0
+    );
 
     return (
         <div className="pos-cart">
@@ -21,8 +26,8 @@ function Cart({
                     </h2>
 
                     <span>
-                        {items.length} item
-                        {items.length !== 1 ? "s" : ""}
+                        {itemCount} item
+                        {itemCount !== 1 ? "s" : ""}
                     </span>
 
                 </div>

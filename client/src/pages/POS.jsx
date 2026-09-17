@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import PageHeader from "../components/common/PageHeader";
 
@@ -7,34 +7,87 @@ import ProductSearch from "../components/pos/ProductSearch";
 import Cart from "../components/pos/Cart";
 import CheckoutPanel from "../components/pos/CheckoutPanel";
 
-import posProducts from "../data/posProducts";
+import { getProducts } from "../api/productApi";
+import { createSale } from "../api/saleApi";
+import { initiateMpesaPayment } from "../api/mpesaApi";
 
 function POS() {
-
+    const [products, setProducts] = useState([]);
     const [cart, setCart] = useState([]);
 
+    const [loadingProducts, setLoadingProducts] =
+        useState(true);
+
+    const [productError, setProductError] =
+        useState("");
+
+    const [saleError, setSaleError] =
+        useState("");
+
+    const [refreshStats, setRefreshStats] =
+        useState(0);
+
+    const loadProducts = async () => {
+        try {
+            setLoadingProducts(true);
+            setProductError("");
+
+            const response = await getProducts();
+
+            setProducts(response.data || []);
+        } catch (error) {
+            console.error(
+                "Failed to load products:",
+                error
+            );
+
+            setProductError(
+                error.response?.data?.message ||
+                "Failed to load products."
+            );
+        } finally {
+            setLoadingProducts(false);
+        }
+    };
+
+    useEffect(() => {
+        loadProducts();
+    }, []);
+
     const addToCart = (product) => {
+        setSaleError("");
 
         setCart((currentCart) => {
-
-            const existing =
-                currentCart.find(
-                    (item) =>
-                        item.id === product.id
-                );
+            const existing = currentCart.find(
+                (item) =>
+                    item.id === product.id
+            );
 
             if (existing) {
+                if (
+                    existing.quantity >=
+                    existing.stock
+                ) {
+                    return currentCart;
+                }
 
                 return currentCart.map(
                     (item) =>
                         item.id === product.id
                             ? {
-                                ...item,
-                                quantity:
-                                    item.quantity + 1
-                            }
+                                  ...item,
+                                  quantity:
+                                      item.quantity +
+                                      1
+                              }
                             : item
                 );
+            }
+
+            if (
+                Number(product.stock || 0) <= 0
+            ) {
+                return currentCart;
             }
 
             return [
@@ -48,31 +101,43 @@ function POS() {
     };
 
     const increaseQuantity = (id) => {
+        setSaleError("");
 
         setCart((currentCart) =>
-            currentCart.map((item) =>
-                item.id === id
-                    ? {
-                        ...item,
-                        quantity:
-                            item.quantity + 1
-                    }
-                    : item
-            )
+            currentCart.map((item) => {
+                if (item.id !== id) {
+                    return item;
+                }
+
+                if (
+                    item.quantity >=
+                    item.stock
+                ) {
+                    return item;
+                }
+
+                return {
+                    ...item,
+                    quantity:
+                        item.quantity + 1
+                };
+            })
         );
     };
 
     const decreaseQuantity = (id) => {
+        setSaleError("");
 
         setCart((currentCart) =>
             currentCart
                 .map((item) =>
                     item.id === id
                         ? {
-                            ...item,
-                            quantity:
-                                item.quantity - 1
-                        }
+                              ...item,
+                              quantity:
+                                  item.quantity -
+                                  1
+                          }
                         : item
                 )
                 .filter(
@@ -83,6 +148,7 @@ function POS() {
     };
 
     const removeFromCart = (id) => {
+        setSaleError("");
 
         setCart((currentCart) =>
             currentCart.filter(
@@ -95,22 +161,218 @@ function POS() {
     const subtotal = cart.reduce(
         (sum, item) =>
             sum +
-            item.price * item.quantity,
+            Number(item.price || 0) *
+                Number(item.quantity || 0),
         0
     );
 
-    const completeSale = (sale) => {
+    /*
+     * Create a real sale in the backend.
+     */
+    const completeSale = async (checkout) => {
+        setSaleError("");
 
-        console.log(
-            "UI sale completed:",
-            {
-                items: cart,
-                ...sale
+        if (cart.length === 0) {
+            throw new Error(
+                "Your cart is empty."
+            );
+        }
+
+        /*
+         * Convert the frontend cart into
+         * the exact backend sales payload.
+         */
+        const salePayload = {
+            items: cart.map((item) => ({
+                product_id: item.id,
+                quantity: Number(
+                    item.quantity
+                ),
+                selling_price: Number(
+                    item.selling_price ??
+                    item.price ??
+                    0
+                )
+            })),
+
+            payment_method:
+                checkout.paymentMethod ===
+                "M-Pesa"
+                    ? "Mpesa"
+                    : checkout.paymentMethod,
+
+            discount: Number(
+                checkout.discount || 0
+            )
+        };
+
+        try {
+            /*
+             * STEP 1
+             * Create the sale in MySQL.
+             */
+            const saleResponse =
+                await createSale(
+                    salePayload
+                );
+
+            console.log(
+                "Sale created:",
+                saleResponse
+            );
+
+            const saleData =
+                saleResponse.data || {};
+
+            const saleId =
+                saleData.saleId ??
+                saleData.id ??
+                saleData.sale_id;
+
+            if (!saleId) {
+                throw new Error(
+                    "Sale was created but no sale ID was returned by the server."
+                );
             }
-        );
 
-        setCart([]);
+            /*
+             * STEP 2
+             * M-Pesa payment.
+             *
+             * The sale is created first with
+             * payment_status = pending.
+             *
+             * Then we initiate the STK Push.
+             */
+            if (
+                checkout.paymentMethod ===
+                "M-Pesa"
+            ) {
+                if (
+                    !checkout.phoneNumber
+                ) {
+                    throw new Error(
+                        "M-Pesa phone number is required."
+                    );
+                }
+
+                const mpesaResponse =
+                    await initiateMpesaPayment(
+                        {
+                            saleId,
+                            phoneNumber:
+                                checkout.phoneNumber
+                        }
+                    );
+
+                console.log(
+                    "M-Pesa STK response:",
+                    mpesaResponse
+                );
+
+                /*
+                 * Keep the cart visible while
+                 * the customer completes the
+                 * M-Pesa payment.
+                 *
+                 * The sale is already pending
+                 * on the backend.
+                 */
+                setRefreshStats(
+                    (current) =>
+                        current + 1
+                );
+
+                await loadProducts();
+
+                return {
+                    success: true,
+                    saleId,
+                    mpesa: true,
+                    response:
+                        mpesaResponse
+                };
+            }
+
+            /*
+             * STEP 3
+             * Cash/Card sale.
+             *
+             * The backend already marks these
+             * payment methods as paid.
+             */
+            setCart([]);
+
+            await loadProducts();
+
+            setRefreshStats(
+                (current) =>
+                    current + 1
+            );
+
+            return {
+                success: true,
+                saleId,
+                mpesa: false
+            };
+        } catch (error) {
+            console.error(
+                "Failed to complete sale:",
+                error
+            );
+
+            const message =
+                error.response?.data
+                    ?.message ||
+                error.response?.data
+                    ?.error ||
+                error.message ||
+                "Failed to complete sale.";
+
+            setSaleError(message);
+
+            throw new Error(message);
+        }
     };
+
+    /*
+     * Convert backend products into
+     * the structure expected by POS.
+     *
+     * Only active products are shown.
+     */
+    const posProducts = products
+        .filter(
+            (product) =>
+                product.status ===
+                "active"
+        )
+        .map((product) => ({
+            ...product,
+
+            category:
+                product.category_name ||
+                "Uncategorized",
+
+            barcode:
+                product.barcode || "",
+
+            price: Number(
+                product.selling_price ??
+                    product.sellingPrice ??
+                    0
+            ),
+
+            stock: Number(
+                product.quantity ?? 0
+            ),
+
+            selling_price: Number(
+                product.selling_price ??
+                    product.sellingPrice ??
+                    0
+            )
+        }));
 
     return (
         <div className="pos-page">
@@ -120,15 +382,39 @@ function POS() {
                 subtitle="Create and complete customer sales."
             />
 
-            <POSStats />
+            <POSStats
+                refreshKey={refreshStats}
+            />
+
+            {loadingProducts && (
+                <div className="pos-loading">
+                    Loading products...
+                </div>
+            )}
+
+            {productError && (
+                <div className="pos-error">
+                    {productError}
+                </div>
+            )}
+
+            {saleError && (
+                <div className="pos-error">
+                    {saleError}
+                </div>
+            )}
 
             <div className="pos-layout">
 
                 <div className="pos-products-section">
 
                     <ProductSearch
-                        products={posProducts}
-                        onAdd={addToCart}
+                        products={
+                            posProducts
+                        }
+                        onAdd={
+                            addToCart
+                        }
                     />
 
                 </div>
@@ -149,7 +435,9 @@ function POS() {
                     />
 
                     <CheckoutPanel
-                        subtotal={subtotal}
+                        subtotal={
+                            subtotal
+                        }
                         onComplete={
                             completeSale
                         }

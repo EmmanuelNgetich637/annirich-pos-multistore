@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
+import { AuthProvider } from "./context/AuthContext";
 
 /* Base */
 import "./styles/variables.css";
@@ -17,7 +18,6 @@ import "./styles/reports.css";
 import "./styles/users.css";
 import "./styles/backup.css";
 import "./styles/settings.css";
-
 
 /* Components */
 import "./styles/sidebar.css";
@@ -35,11 +35,15 @@ import "./styles/products.css";
 /* Responsive & Animations */
 import "./styles/responsive.css";
 import "./styles/animations.css";
- 
-ReactDOM.createRoot(document.getElementById("root")).render(
+
+ReactDOM.createRoot(
+    document.getElementById("root")
+).render(
     <React.StrictMode>
         <BrowserRouter>
-            <App />
+            <AuthProvider>
+                <App />
+            </AuthProvider>
         </BrowserRouter>
     </React.StrictMode>
 );

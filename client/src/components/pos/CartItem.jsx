@@ -10,9 +10,14 @@ function CartItem({
     onDecrease,
     onRemove
 }) {
+    const price = Number(item.price || 0);
+    const quantity = Number(item.quantity || 0);
 
-    const total =
-        item.price * item.quantity;
+    const total = price * quantity;
+
+    const stock = Number(item.stock || 0);
+
+    const canIncrease = quantity < stock;
 
     return (
         <div className="cart-item">
@@ -24,7 +29,7 @@ function CartItem({
                 </strong>
 
                 <span>
-                    KSh {item.price.toLocaleString()} each
+                    KSh {price.toLocaleString()} each
                 </span>
 
             </div>
@@ -32,21 +37,26 @@ function CartItem({
             <div className="cart-item-controls">
 
                 <button
+                    type="button"
                     onClick={() =>
                         onDecrease(item.id)
                     }
+                    aria-label={`Decrease ${item.name} quantity`}
                 >
                     <FiMinus />
                 </button>
 
                 <span>
-                    {item.quantity}
+                    {quantity}
                 </span>
 
                 <button
+                    type="button"
                     onClick={() =>
                         onIncrease(item.id)
                     }
+                    disabled={!canIncrease}
+                    aria-label={`Increase ${item.name} quantity`}
                 >
                     <FiPlus />
                 </button>
@@ -58,10 +68,12 @@ function CartItem({
             </strong>
 
             <button
+                type="button"
                 className="cart-remove"
                 onClick={() =>
                     onRemove(item.id)
                 }
+                aria-label={`Remove ${item.name} from cart`}
             >
                 <FiTrash2 />
             </button>

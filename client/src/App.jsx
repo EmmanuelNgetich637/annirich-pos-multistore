@@ -1,4 +1,8 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import {
+    Routes,
+    Route,
+    Navigate
+} from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
@@ -13,90 +17,105 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Users from "./pages/Users";
 import Backup from "./pages/Backup";
+import Login from "./pages/Login";
 
 import AppLayout from "./layouts/AppLayout";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 function App() {
     return (
         <Routes>
-            <Route element={<AppLayout />}>
 
-                <Route
-                    path="/"
-                    element={
-                        <Navigate
-                            to="/dashboard"
-                            replace
-                        />
-                    }
-                />
+            {/* Public */}
+            <Route
+                path="/login"
+                element={<Login />}
+            />
 
-                <Route
-                    path="/dashboard"
-                    element={<Dashboard />}
-                />
+            {/* Protected */}
+            <Route element={<ProtectedRoute />}>
 
-                <Route
-                    path="/products"
-                    element={<Products />}
-                />
+                <Route element={<AppLayout />}>
 
-                <Route
-                    path="/categories"
-                    element={<Categories />}
-                />
+                    <Route
+                        path="/"
+                        element={
+                            <Navigate
+                                to="/dashboard"
+                                replace
+                            />
+                        }
+                    />
 
-                <Route
-                    path="/customers"
-                    element={<Customers />}
-                />
+                    <Route
+                        path="/dashboard"
+                        element={<Dashboard />}
+                    />
 
-                <Route
-                    path="/sales"
-                    element={<Sales />}
-                />
+                    <Route
+                        path="/products"
+                        element={<Products />}
+                    />
 
-                <Route
-                    path="/pos"
-                    element={<POS />}
-                />
+                    <Route
+                        path="/categories"
+                        element={<Categories />}
+                    />
 
-                <Route
-                    path="/purchases"
-                    element={<Purchases />}
-                />
+                    <Route
+                        path="/customers"
+                        element={<Customers />}
+                    />
 
-                <Route
-                    path="/suppliers"
-                    element={<Suppliers />}
-                />
+                    <Route
+                        path="/sales"
+                        element={<Sales />}
+                    />
 
-                <Route
-                    path="/expenses"
-                    element={<Expenses />}
-                />
+                    <Route
+                        path="/pos"
+                        element={<POS />}
+                    />
 
-                <Route
-                    path="/reports"
-                    element={<Reports />}
-                />
+                    <Route
+                        path="/purchases"
+                        element={<Purchases />}
+                    />
 
-                <Route
-                    path="/settings"
-                    element={<Settings />}
-                />
+                    <Route
+                        path="/suppliers"
+                        element={<Suppliers />}
+                    />
 
-                <Route
-                    path="/users"
-                    element={<Users />}
-                />
+                    <Route
+                        path="/expenses"
+                        element={<Expenses />}
+                    />
 
-                <Route
-                    path="/backup"
-                    element={<Backup />}
-                />
+                    <Route
+                        path="/reports"
+                        element={<Reports />}
+                    />
+
+                    <Route
+                        path="/settings"
+                        element={<Settings />}
+                    />
+
+                    <Route
+                        path="/users"
+                        element={<Users />}
+                    />
+
+                    <Route
+                        path="/backup"
+                        element={<Backup />}
+                    />
+
+                </Route>
 
             </Route>
+
         </Routes>
     );
 }
