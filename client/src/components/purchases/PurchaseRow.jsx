@@ -1,10 +1,10 @@
-import {
-    FiEye
-} from "react-icons/fi";
-
+import { FiEye } from "react-icons/fi";
 import StatusBadge from "../common/StatusBadge";
 
-function PurchaseRow({ purchase, onView }) {
+function PurchaseRow({
+    purchase,
+    onView
+}) {
 
     const total = Number(
         purchase.total_amount || 0
@@ -21,7 +21,8 @@ function PurchaseRow({ purchase, onView }) {
 
             <td>
                 <strong>
-                    {purchase.invoice_number || `PUR-${purchase.id}`}
+                    {purchase.invoice_number ||
+                        `PUR-${purchase.id}`}
                 </strong>
             </td>
 
@@ -38,7 +39,8 @@ function PurchaseRow({ purchase, onView }) {
             </td>
 
             <td>
-                KSh {total.toLocaleString()}
+                KSh{" "}
+                {total.toLocaleString()}
             </td>
 
             <td>
@@ -54,7 +56,9 @@ function PurchaseRow({ purchase, onView }) {
                     <button
                         className="icon-btn"
                         title="View purchase"
-                        onClick={() => onView?.(purchase)}
+                        onClick={() =>
+                            onView?.(purchase)
+                        }
                     >
                         <FiEye />
                     </button>

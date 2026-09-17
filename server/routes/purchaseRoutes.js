@@ -2,60 +2,126 @@ const express = require("express");
 
 const router = express.Router();
 
-const purchaseController = require("../controllers/purchaseController");
+const purchaseController =
+    require("../controllers/purchaseController");
 
-const authenticate = require("../middleware/authMiddleware");
-const authorize = require("../middleware/roleMiddleware");
+const authenticate =
+    require("../middleware/authMiddleware");
+
+const authorize =
+    require("../middleware/roleMiddleware");
 
 const {
     createPurchaseValidation,
     validate
 } = require("../validators/purchaseValidation");
 
+
 router.use(authenticate);
 
-// List purchases
+
+// ============================================================
+// Get all purchases
+// ============================================================
+
 router.get(
     "/",
-    authorize("admin", "manager", "cashier"),
+    authorize(
+        "admin",
+        "manager",
+        "cashier"
+    ),
     purchaseController.getPurchases
 );
 
+
+// ============================================================
 // Search purchases
+// ============================================================
+
 router.get(
     "/search",
-    authorize("admin", "manager", "cashier"),
+    authorize(
+        "admin",
+        "manager",
+        "cashier"
+    ),
     purchaseController.searchPurchases
 );
 
-// Pagination
+
+// ============================================================
+// Paginated purchases
+// ============================================================
+
 router.get(
     "/page/list",
-    authorize("admin", "manager", "cashier"),
+    authorize(
+        "admin",
+        "manager",
+        "cashier"
+    ),
     purchaseController.getPurchasesPaginated
 );
 
-// Statistics
+
+// ============================================================
+// Purchase statistics
+// ============================================================
+
 router.get(
     "/stats",
-    authorize("admin", "manager"),
+    authorize(
+        "admin",
+        "manager"
+    ),
     purchaseController.getPurchaseStatistics
 );
 
-// Get purchase by ID
+
+// ============================================================
+// Get single purchase
+// ============================================================
+
 router.get(
     "/:id",
-    authorize("admin", "manager", "cashier"),
+    authorize(
+        "admin",
+        "manager",
+        "cashier"
+    ),
     purchaseController.getPurchase
 );
 
+
+// ============================================================
 // Create purchase
+// ============================================================
+
 router.post(
     "/",
-    authorize("admin", "manager"),
+    authorize(
+        "admin",
+        "manager"
+    ),
     createPurchaseValidation,
     validate,
     purchaseController.createPurchase
 );
+
+
+// ============================================================
+// Cancel purchase
+// ============================================================
+
+router.patch(
+    "/:id/cancel",
+    authorize(
+        "admin",
+        "manager"
+    ),
+    purchaseController.cancelPurchase
+);
+
 
 module.exports = router;

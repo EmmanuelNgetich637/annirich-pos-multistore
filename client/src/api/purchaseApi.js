@@ -33,3 +33,8 @@ export const getPurchaseStatistics = async () => {
     const response = await api.get("/purchases/stats");
     return response.data;
 };
+
+export const cancelPurchase = async (id) => {
+    const response = await api.patch(`/purchases/${id}/cancel`);
+    return response.data;
+};

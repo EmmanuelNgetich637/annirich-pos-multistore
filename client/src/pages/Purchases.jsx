@@ -7,6 +7,7 @@ import DataTable from "../components/common/DataTable";
 import PurchaseStats from "../components/purchases/PurchaseStats";
 import PurchaseRow from "../components/purchases/PurchaseRow";
 import PurchaseModal from "../components/purchases/PurchaseModal";
+import PurchaseDetailsModal from "../components/purchases/PurchaseDetailsModal";
 
 import {
     getPurchases
@@ -15,12 +16,24 @@ import {
 function Purchases() {
 
     const [purchases, setPurchases] = useState([]);
+
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("All");
-    const [openModal, setOpenModal] = useState(false);
 
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+    const [openModal, setOpenModal] =
+        useState(false);
+
+    const [selectedPurchase, setSelectedPurchase] =
+        useState(null);
+
+    const [openDetails, setOpenDetails] =
+        useState(false);
+
+    const [loading, setLoading] =
+        useState(true);
+
+    const [error, setError] =
+        useState("");
 
     const columns = [
         "Reference",
@@ -39,15 +52,18 @@ function Purchases() {
             setLoading(true);
             setError("");
 
-            const response = await getPurchases();
+            const response =
+                await getPurchases();
 
-            setPurchases(response?.data || []);
+            setPurchases(
+                response?.data || []
+            );
 
         } catch (err) {
 
             console.error(
                 "Failed to load purchases:",
-                err
+                err.response?.data || err
             );
 
             setError(
@@ -70,7 +86,9 @@ function Purchases() {
         purchases.filter((purchase) => {
 
             const searchTerm =
-                search.toLowerCase().trim();
+                search
+                    .toLowerCase()
+                    .trim();
 
             const reference =
                 (
@@ -96,19 +114,39 @@ function Purchases() {
                 matchesSearch &&
                 matchesStatus
             );
+
         });
 
-    const handlePurchaseSaved = async () => {
+    const handlePurchaseSaved =
+        async () => {
 
-        setOpenModal(false);
+            setOpenModal(false);
 
-        await loadPurchases();
+            await loadPurchases();
 
-    };
+        };
+
+    const handleViewPurchase =
+        (purchase) => {
+
+            setSelectedPurchase(
+                purchase
+            );
+
+            setOpenDetails(true);
+
+        };
+
+    const handleCloseDetails =
+        () => {
+
+            setOpenDetails(false);
+            setSelectedPurchase(null);
+
+        };
 
     return (
         <>
-
             <PageHeader
                 title="Purchases"
                 subtitle="Manage stock purchases and supplier records."
@@ -157,31 +195,35 @@ function Purchases() {
                 </div>
             )}
 
-            {!loading && !error && (
-                <DataTable columns={columns}>
+            {!loading &&
+                !error && (
+                    <DataTable
+                        columns={columns}
+                    >
 
-                    {filteredPurchases.map(
-                        (purchase) => (
+                        {filteredPurchases.map(
+                            (purchase) => (
 
-                            <PurchaseRow
-                                key={purchase.id}
-                                purchase={purchase}
-                            />
+                                <PurchaseRow
+                                    key={purchase.id}
+                                    purchase={purchase}
+                                    onView={
+                                        handleViewPurchase
+                                    }
+                                />
 
-                        )
-                    )}
+                            )
+                        )}
 
-                </DataTable>
-            )}
+                    </DataTable>
+                )}
 
             {!loading &&
                 !error &&
                 filteredPurchases.length === 0 && (
-
                     <div className="empty-state">
                         No purchases found.
                     </div>
-
                 )}
 
             <PurchaseModal
@@ -189,7 +231,22 @@ function Purchases() {
                 onClose={() =>
                     setOpenModal(false)
                 }
-                onSaved={handlePurchaseSaved}
+                onSaved={
+                    handlePurchaseSaved
+                }
+            />
+
+            <PurchaseDetailsModal
+                open={openDetails}
+                purchase={
+                    selectedPurchase
+                }
+                onClose={
+                    handleCloseDetails
+                }
+                onUpdated={
+                    loadPurchases
+                }
             />
 
         </>

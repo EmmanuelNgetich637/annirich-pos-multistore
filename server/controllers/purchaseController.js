@@ -395,6 +395,55 @@ const getPurchaseStatistics = async (req, res) => {
 
 
 
+
+const cancelPurchase = async (req, res) => {
+
+    try {
+
+        const result = await purchaseService.cancelPurchase(
+            req.params.id,
+            req.user.id,
+            req.storeId
+        );
+
+        await logActivity({
+
+            user_id: req.user.id,
+
+            action: "CANCEL",
+
+            module: "Purchases",
+
+            description: `Cancelled purchase ${result.purchaseId}`,
+
+            ip_address: req.ip
+
+        });
+
+        res.json({
+
+            success: true,
+
+            message: "Purchase cancelled successfully.",
+
+            data: result
+
+        });
+
+    } catch (error) {
+
+        res.status(400).json({
+
+            success: false,
+
+            message: error.message
+
+        });
+
+    }
+
+};
+
 module.exports = {
 
     createPurchase,
@@ -406,6 +455,8 @@ module.exports = {
 
     getPurchasesPaginated,
 
-    getPurchaseStatistics
+    getPurchaseStatistics,
+
+    cancelPurchase
 
 };
